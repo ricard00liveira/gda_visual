@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  //baseURL: "https://back.gda-app.xyz/api/",
-  baseURL: "http://localhost:8000/api/",
+  baseURL: "https://back.gda-app.xyz/api/",
+  //baseURL: "http://localhost:8000/api/",
 });
 
 // Interceptor para adicionar o token automaticamente
