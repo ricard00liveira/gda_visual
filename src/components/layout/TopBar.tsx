@@ -10,31 +10,13 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 export const TopBar = () => {
   const navigate = useNavigate();
   const { toggleSidebar } = useSidebar();
   const isMobile = useIsMobile();
-
-  const [user, setUser] = useState<{ nome: string; tipo: string } | null>(null);
-
-  useEffect(() => {
-    const nome = localStorage.getItem("nome");
-    const tipo = localStorage.getItem("tipo");
-
-    if (nome && tipo) {
-      setUser({ nome, tipo });
-    }
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("tipo");
-    localStorage.removeItem("nome");
-    navigate("/login");
-  };
+  const { user, logout } = useAuth();
 
   const getUserRole = (tipo: string) => {
     switch (tipo) {
@@ -78,7 +60,7 @@ export const TopBar = () => {
           <DropdownMenuItem
             onClick={() =>
               navigate(
-                user.tipo === "comum" ? "/comum/perfil" : "/dashboard/perfil"
+                user?.tipo === "comum" ? "/comum/perfil" : "/dashboard/perfil"
               )
             }
             className="cursor-pointer"
@@ -89,7 +71,7 @@ export const TopBar = () => {
           <DropdownMenuItem
             onClick={() =>
               navigate(
-                user.tipo === "comum"
+                user?.tipo === "comum"
                   ? "/comum/configuracoes"
                   : "/dashboard/configuracoes"
               )
@@ -101,7 +83,7 @@ export const TopBar = () => {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onClick={handleLogout}
+            onClick={logout}
             className="cursor-pointer text-red-600"
           >
             <LogOut className="mr-2 h-4 w-4" />

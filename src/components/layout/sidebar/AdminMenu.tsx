@@ -47,7 +47,7 @@ export const AdminMenu = () => {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   // arrumar open={false} para open={isAdminOpen}
   return (
-    <Collapsible open={false} onOpenChange={setIsAdminOpen}>
+    <Collapsible open={isAdminOpen} onOpenChange={setIsAdminOpen}>
       <CollapsibleTrigger className="w-full px-5 py-2 flex items-center justify-between text-xs font-medium text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden hover:text-sidebar-foreground">
         Administração
         <ChevronDown

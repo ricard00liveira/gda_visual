@@ -1,30 +1,15 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
-const PrivateRoute = ({ allowedRoles }: { allowedRoles: string[] }) => {
-  const [userType, setUserType] = useState<string | null>(null);
+interface ProtectedRouteProps {
+  allowedRoles: ("comum" | "operador" | "adm")[];
+}
 
-  useEffect(() => {
-    const tipo = localStorage.getItem("tipo");
-    setUserType(tipo);
-  }, []);
+const PrivateRoute = ({ allowedRoles }: ProtectedRouteProps) => {
+  const { user } = useAuth();
 
-  if (userType === null) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        Carregando...
-      </div>
-    );
-  }
-
-  if (!userType) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (!allowedRoles.includes(userType)) {
-    return (
-      <Navigate to={userType === "comum" ? "/comum" : "/dashboard"} replace />
-    );
+  if (!user || !allowedRoles.includes(user.tipo)) {
+    return <Navigate to="/login" />;
   }
 
   return <Outlet />;

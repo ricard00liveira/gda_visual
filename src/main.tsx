@@ -1,13 +1,15 @@
 import "./index.css";
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { RouterProvider } from "react-router-dom";
-import { createRouter } from "./routes/index"; // Agora importa a função
-
-const router = createRouter();
+import { AuthProvider } from "@/context/AuthProvider";
+import { App } from "./App";
+import { Toaster } from "./components/ui/toaster";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <AuthProvider>
+      <App />
+      <Toaster />
+    </AuthProvider>
   </React.StrictMode>
 );

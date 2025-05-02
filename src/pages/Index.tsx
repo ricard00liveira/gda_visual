@@ -20,16 +20,15 @@ const Index = () => {
   useEffect(() => {
     const loadFont = async () => {
       const font = new FontFace(
-        'Inter',
-        'url(https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff)'
+        "Inter",
+        "url(https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff)"
       );
 
       try {
         await font.load();
         document.fonts.add(font);
-        console.log('Inter font loaded successfully');
       } catch (error) {
-        console.error('Error loading Inter font:', error);
+        console.error("Error loading font:", error);
       }
     };
 
@@ -59,21 +58,32 @@ const Index = () => {
               Denúncias Ambientais
             </h2>
             <p className="text-gray-300 text-base lg:text-lg mb-8 text-justify">
-              O <span className="text-emerald-400 font-semibold">GDA</span> é um sistema online criado para facilitar o registro de 
-              <span className="text-emerald-400 font-semibold"> denúncias sobre problemas que afetam o meio ambiente</span>, como:
+              O <span className="text-emerald-400 font-semibold">GDA</span> é um
+              sistema online criado para facilitar o registro de
+              <span className="text-emerald-400 font-semibold">
+                {" "}
+                denúncias sobre problemas que afetam o meio ambiente
+              </span>
+              , como:
               <span className="block mt-2 text-sm text-center text-emerald-400">
-                • poluição | desmatamento | maus-tratos a animais | entre outros...
+                • poluição | desmatamento | maus-tratos a animais | entre
+                outros...
               </span>
               <span className="block mt-2">
-                Ele permite que <span className="text-emerald-400 font-semibold">qualquer pessoa</span> informe essas situações de forma simples, 
-                ajudando as autoridades a investigarem e tomarem providências. Para mais informações, acesse a página de ajuda.
+                Ele permite que{" "}
+                <span className="text-emerald-400 font-semibold">
+                  qualquer pessoa
+                </span>{" "}
+                informe essas situações de forma simples, ajudando as
+                autoridades a investigarem e tomarem providências. Para mais
+                informações, acesse a página de ajuda.
               </span>
             </p>
 
             <div className="flex justify-center mt-4">
               <Link to="/faq">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="text-white border-white hover:bg-white/10 transition-colors bg-emerald-600/20"
                 >
                   <HelpCircle className="mr-2 h-4 w-4" />
@@ -82,7 +92,7 @@ const Index = () => {
               </Link>
             </div>
           </div>
-          
+
           {/* Decorative elements */}
           <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-emerald-500/10 to-transparent" />
           <div className="absolute -bottom-16 -left-16 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl" />
@@ -93,14 +103,16 @@ const Index = () => {
         <div className="w-full lg:w-1/2 p-8 lg:p-16 bg-white">
           <div className="max-w-md mx-auto">
             <div className="flex justify-end mb-12">
-              <Link 
-                to="/register" 
+              <Link
+                to="/register"
                 className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary transition-all duration-300 
                            group border border-emerald-500/30 px-3 py-1.5 rounded-lg 
                            hover:bg-emerald-50 hover:border-emerald-500/50 
                            hover:shadow-sm hover:scale-105 transform"
               >
-                <span className="group-hover:text-emerald-600 transition-colors">Não tem conta?</span>
+                <span className="group-hover:text-emerald-600 transition-colors">
+                  Não tem conta?
+                </span>
                 <UserPlus className="w-4 h-4 text-emerald-500 group-hover:text-emerald-600 transition-colors" />
               </Link>
             </div>
@@ -117,8 +129,8 @@ const Index = () => {
 
               <div className="space-y-4">
                 <Link to="/login">
-                  <Button 
-                    className="w-full text-lg h-12 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 transition-all duration-300" 
+                  <Button
+                    className="w-full text-lg h-12 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 transition-all duration-300"
                     size="lg"
                   >
                     <span>Entrar</span>
@@ -130,9 +142,9 @@ const Index = () => {
                   <p className="text-sm text-gray-600 text-center">
                     Contribua de forma anônima
                   </p>
-                  <Button 
-                    variant="outline" 
-                    className="w-full text-lg h-12 border-2 hover:bg-gray-50 transition-colors duration-300" 
+                  <Button
+                    variant="outline"
+                    className="w-full text-lg h-12 border-2 hover:bg-gray-50 transition-colors duration-300"
                     size="lg"
                     onClick={() => setShowDialog(true)}
                   >
@@ -150,14 +162,31 @@ const Index = () => {
             <DialogHeader>
               <DialogTitle>Aviso Importante</DialogTitle>
               <DialogDescription className="text-justify pt-4">
-                Ao realizar sua denúncia de forma anônima, garantimos a proteção das suas informações pessoais, em conformidade com a LGPD (Lei Geral de Proteção de Dados - Lei nº 13.709/2018), a Lei de Acesso à Informação (Lei nº 12.527/2011) e o Código de Defesa dos Usuários de Serviços Públicos (Lei nº 13.460/2017).
-                <br /><br />
-                No entanto, ao optar pelo anonimato, você não poderá acompanhar o andamento da denúncia ou receber notificações sobre seu status, uma vez que seus dados não serão associados à submissão. Ao prosseguir, você concorda com esses termos e compreende as limitações descritas.
+                Ao enviar uma denúncia anônima, suas informações estão
+                protegidas conforme a LGPD (Lei nº 13.709/2018), a Lei de Acesso
+                à Informação (Lei nº 12.527/2011) e o Código de Defesa dos
+                Usuários de Serviços Públicos (Lei nº 13.460/2017).
+                <br />
+                <br />
+                No modo anônimo, não será possível acompanhar a denúncia nem
+                receber retorno, pois seus dados não serão vinculados.
+                <br />
+                <br />
+                Faça sua denúncia com responsabilidade. Informações falsas podem
+                configurar crime, como previsto no Código Penal:
+                <br />
+                <strong>Art. 340</strong> – Falsa comunicação de crime: provocar
+                a ação da autoridade, comunicando fato que sabe não ter ocorrido
+                (pena: <strong>detenção de 1 a 6 meses</strong>, ou multa).
+                <br />
+                <br />
+                Ao prosseguir, você declara estar ciente dos termos, limitações
+                e possíveis consequências legais em caso de denúncia falsa.
               </DialogDescription>
             </DialogHeader>
             <div className="flex items-center space-x-2 py-4">
-              <Checkbox 
-                id="terms" 
+              <Checkbox
+                id="terms"
                 checked={isChecked}
                 onCheckedChange={(checked) => setIsChecked(checked as boolean)}
               />

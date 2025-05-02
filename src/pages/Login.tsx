@@ -4,26 +4,77 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Leaf, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { getProfile, loginRequest } from "@/services/auth";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login, loading, error } = useAuth();
+  const { login } = useAuth();
+  const { toast } = useToast();
 
   const [cpf, setCpf] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const success = await login(cpf, password);
-    if (success) {
-      navigate("/dashboard");
+    if (!cpf.trim() || !password.trim()) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "CPF e senha não podem estar vazios.",
+        variant: "destructive",
+        duration: 2500,
+      });
+      return;
+    }
+    if (cpf.length !== 11 || !/^\d+$/.test(cpf)) {
+      toast({
+        title: "Atenção",
+        description:
+          "o CPF informado deve conter exatamente 11 dígitos numéricos.",
+        variant: "destructive",
+        duration: 2500,
+      });
+      return;
+    }
+    setLoading(true);
+
+    try {
+      const { access, refresh } = await loginRequest(cpf, password);
+      const profile = await getProfile(access);
+      const tipo = profile.tipo;
+      if (!["comum", "operador", "adm"].includes(tipo)) {
+        throw new Error("Tipo de usuário inválido recebido da API.");
+      }
+      const user = {
+        nome: profile.nome,
+        cpf: profile.cpf,
+        tipo: tipo as "comum" | "operador" | "adm",
+      };
+
+      login({ token: access, refresh, user });
+      navigate(user.tipo === "comum" ? "/comum" : "/dashboard");
+    } catch (err) {
+      if (err.response.status === 401) {
+        //console.error("Erro no login:", err);
+        if (err.response.status === 401) {
+          toast({
+            variant: "warning",
+            title: "Erro no acesso",
+            description: "Usuário não cadastrado ou senha incorreta.",
+            duration: 3000,
+          });
+          setPassword("");
+        }
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="public-page min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <div className="w-full max-w-[1200px] flex flex-col lg:flex-row border border-black rounded-lg overflow-hidden shadow-lg">
-        {/* Lado esquerdo - Hero Section */}
         <div className="w-full lg:w-1/2 bg-gradient-to-br from-[#1A1F2C] to-[#2A3441] text-white p-8 lg:p-16 flex flex-col justify-between relative overflow-hidden">
           <div className="relative z-10">
             <Link
@@ -33,7 +84,6 @@ const Login = () => {
               <ArrowLeft className="w-4 h-4" />
               <span>Voltar para início</span>
             </Link>
-
             <div className="flex items-center gap-2 mb-8">
               <Leaf className="w-8 h-8 text-emerald-400" />
               <h1 className="text-3xl font-bold">GDA</h1>
@@ -46,8 +96,6 @@ const Login = () => {
             </p>
           </div>
         </div>
-
-        {/* Lado direito - Login Form */}
         <div className="w-full lg:w-1/2 p-8 lg:p-16 bg-white">
           <div className="max-w-md mx-auto">
             <div className="flex justify-end mb-12">
@@ -61,7 +109,6 @@ const Login = () => {
                 <UserPlus className="w-4 h-4 text-emerald-500 group-hover:text-emerald-600 transition-colors" />
               </Link>
             </div>
-
             <div className="mb-12">
               <h2 className="text-3xl lg:text-4xl font-bold mb-4 bg-gradient-to-r from-emerald-600 to-emerald-400 bg-clip-text text-transparent">
                 Bem-vindo de volta!
@@ -70,9 +117,6 @@ const Login = () => {
                 Conecte-se e continue contribuindo.
               </p>
             </div>
-
-            {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
                 <label className="block text-sm font-medium mb-2">CPF:</label>
@@ -81,6 +125,8 @@ const Login = () => {
                   value={cpf}
                   onChange={(e) => setCpf(e.target.value)}
                   className="h-12"
+                  disabled={loading}
+                  placeholder="Somente números"
                   required
                 />
               </div>
@@ -91,18 +137,18 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="h-12"
+                  disabled={loading}
+                  placeholder="Digite sua senha"
                   required
                 />
               </div>
-
               <Button
                 type="submit"
                 className="w-full text-lg h-12 bg-gradient-to-r from-emerald-600 to-emerald-500"
                 disabled={loading}
               >
-                {loading ? "Entrando..." : "Entrar"}
+                {loading ? "Acessando..." : "Entrar"}
               </Button>
-
               <div className="text-center">
                 <Link
                   to="/forgot-password"

@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://back.gda-app.xyz/api/",
-  //baseURL: "http://localhost:8000/api/",
+  //baseURL: "https://back.gda-app.xyz/api/",
+  baseURL: "http://localhost:8000/api/",
 });
 
 // Interceptor para adicionar o token automaticamente
@@ -17,11 +17,19 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Interceptor para renovar o token se receber um erro 401
+/// Interceptor para renovar o token se receber um erro 401
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response && error.response.status === 401) {
+    const originalRequest = error.config;
+
+    const isAuthRoute =
+      originalRequest?.url?.includes("/token/") ||
+      originalRequest?.url?.includes("/login") ||
+      originalRequest?.url?.includes("/register");
+
+    // Se a requisição falhou em uma rota pública (login, token, etc), não tentar renovar nem redirecionar
+    if (error.response && error.response.status === 401 && !isAuthRoute) {
       console.warn("Token expirado. Tentando renovar...");
 
       const refreshToken = localStorage.getItem("refreshToken");
@@ -35,18 +43,16 @@ api.interceptors.response.use(
 
       try {
         const refreshResponse = await axios.post(
-          "https://back.gda-app.xyz/api/token/refresh/",
-          {
-            refresh: refreshToken,
-          }
+          "http://localhost:8000/api/token/refresh/",
+          { refresh: refreshToken }
         );
 
         const newAccessToken = refreshResponse.data.access;
         localStorage.setItem("token", newAccessToken);
 
         // Refaz a requisição original com o novo token
-        error.config.headers.Authorization = `Bearer ${newAccessToken}`;
-        return api.request(error.config);
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return api.request(originalRequest);
       } catch (refreshError) {
         console.error("Erro ao renovar token:", refreshError);
         localStorage.clear();
