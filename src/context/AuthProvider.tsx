@@ -3,7 +3,9 @@ import { createContext, useState, useEffect, ReactNode } from "react";
 type UserType = {
   nome: string;
   cpf: string;
+  email: string;
   tipo: "comum" | "operador" | "adm";
+  imagem_perfil_url?: string;
 };
 
 type AuthContextType = {
@@ -27,7 +29,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const savedUser = {
       nome: localStorage.getItem("nome") || "",
       cpf: localStorage.getItem("cpf") || "",
+      email: localStorage.getItem("email") || "",
       tipo: (localStorage.getItem("tipo") || "") as UserType["tipo"],
+      imagem_perfil_url: localStorage.getItem("imagem_perfil_url") || "",
     };
     if (savedToken && savedUser.tipo) {
       setToken(savedToken);
@@ -52,7 +56,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("refreshToken", refresh);
     localStorage.setItem("nome", user.nome);
     localStorage.setItem("cpf", user.cpf);
+    localStorage.setItem("email", user.email);
     localStorage.setItem("tipo", user.tipo);
+    localStorage.setItem("imagem_perfil_url", user.imagem_perfil_url || "");
   };
 
   // Logout

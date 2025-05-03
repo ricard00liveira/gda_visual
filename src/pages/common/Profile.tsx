@@ -16,7 +16,9 @@ const Profile = () => {
       <div className="grid gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-medium">Foto do Perfil</CardTitle>
+            <CardTitle className="text-lg font-medium">
+              Foto do Perfil
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-6">
@@ -68,21 +70,6 @@ const Profile = () => {
                       id="email"
                       className="pl-9"
                       defaultValue="joao.silva@email.com"
-                      disabled={!isEditing}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="phone">Telefone</Label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
-                    <Input
-                      id="phone"
-                      className="pl-9"
-                      defaultValue="(53) 99999-9999"
                       disabled={!isEditing}
                     />
                   </div>

@@ -32,8 +32,9 @@ const RenewPassword = () => {
       toast({
         variant: "warning",
         title: "Token inválido",
-        description: "Verifique o código de recuperação e tente novamente.",
-        duration: 3000,
+        description:
+          "Por favor, verifique o código de recuperação informado. Caso o erro persista, tente novamente ou solicite um novo código.",
+        duration: 4500,
       });
     } finally {
       setLoading(false);
@@ -148,7 +149,7 @@ const RenewPassword = () => {
               ? "Processando..."
               : cpf
               ? "Salvar nova senha"
-              : "Validar token"}
+              : "Validar código"}
           </Button>
         </form>
       </div>

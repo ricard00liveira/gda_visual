@@ -193,6 +193,7 @@ const Register = () => {
                     required
                   />
                 </div>
+
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     E-mail:
@@ -206,6 +207,16 @@ const Register = () => {
                     required
                   />
                 </div>
+
+                <p className="text-xs text-gray-500 mt-2 text-justify">
+                  <strong className="text-red-600">Advertência:</strong>{" "}
+                  cadastros contendo nomes inexistentes, inverídicos ou
+                  ofensivos serão desconsiderados, e as respectivas denúncias
+                  serão automaticamente descartadas. Utilize um endereço de
+                  e-mail válido para garantir o recebimento de comunicações e
+                  informações enviadas pelo sistema.
+                </p>
+
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     Senha:

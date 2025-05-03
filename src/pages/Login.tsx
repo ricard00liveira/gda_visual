@@ -49,7 +49,9 @@ const Login = () => {
       const user = {
         nome: profile.nome,
         cpf: profile.cpf,
+        email: profile.email,
         tipo: tipo as "comum" | "operador" | "adm",
+        imagem_perfil_url: profile.imagem_perfil_url,
       };
 
       login({ token: access, refresh, user });

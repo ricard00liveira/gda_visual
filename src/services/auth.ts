@@ -9,6 +9,8 @@ export interface ProfileResponse {
   nome: string;
   cpf: string;
   tipo: string;
+  email: string;
+  imagem_perfil_url?: string;
 }
 
 export interface RegisterPayload {

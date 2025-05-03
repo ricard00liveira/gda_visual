@@ -58,9 +58,10 @@ const ForgotPassword = () => {
             <Key className="w-8 h-8 text-emerald-500" />
             <h1 className="text-2xl font-bold">Recuperar Senha</h1>
           </div>
-          <p className="text-gray-600">
-            Informe o seu CPF ou e-mail cadastrado para receber um link de
-            redefinição de senha.
+          <p className="text-gray-600 text-justify">
+            Informe seu CPF ou e-mail cadastrado. Será enviada uma chave de
+            validação para o e-mail vinculado aos dados informados, a qual
+            deverá ser utilizada para registrar uma nova senha.
           </p>
         </div>
 
@@ -88,7 +89,7 @@ const ForgotPassword = () => {
               disabled={loading}
               className="w-full text-lg h-12 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 transition-all duration-300"
             >
-              {loading ? "Solicitando..." : "Solicitar recuperação"}
+              {loading ? "Solicitando..." : "Solicitar chave de validação"}
             </Button>
             <Button
               type="button"

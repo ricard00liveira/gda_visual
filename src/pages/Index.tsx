@@ -160,30 +160,66 @@ const Index = () => {
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
           <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
-              <DialogTitle>Aviso Importante</DialogTitle>
-              <DialogDescription className="text-justify pt-4">
-                Ao enviar uma denúncia anônima, suas informações estão
-                protegidas conforme a LGPD (Lei nº 13.709/2018), a Lei de Acesso
-                à Informação (Lei nº 12.527/2011) e o Código de Defesa dos
-                Usuários de Serviços Públicos (Lei nº 13.460/2017).
+              <DialogTitle className="text-lg font-bold text-red-600">
+                Aviso Importante
+              </DialogTitle>
+              <DialogDescription className="text-justify pt-4 text-sm leading-relaxed">
+                Ao enviar uma <strong>denúncia anônima</strong>, suas
+                informações estarão protegidas nos termos da
+                <strong>
+                  {" "}
+                  Lei Geral de Proteção de Dados Pessoais (LGPD – Lei nº
+                  13.709/2018)
+                </strong>
+                , da{" "}
+                <strong>
+                  Lei de Acesso à Informação (Lei nº 12.527/2011)
+                </strong>{" "}
+                e do
+                <strong>
+                  {" "}
+                  Código de Defesa dos Usuários de Serviços Públicos (Lei nº
+                  13.460/2017)
+                </strong>
+                .
                 <br />
                 <br />
-                No modo anônimo, não será possível acompanhar a denúncia nem
-                receber retorno, pois seus dados não serão vinculados.
+                No entanto, ao optar pelo envio anônimo,{" "}
+                <strong>não será possível acompanhar o andamento</strong> da
+                denúncia nem receber retorno, uma vez que seus dados não estarão
+                vinculados à manifestação.
                 <br />
                 <br />
-                Faça sua denúncia com responsabilidade. Informações falsas podem
-                configurar crime, como previsto no Código Penal:
-                <br />
-                <strong>Art. 340</strong> – Falsa comunicação de crime: provocar
-                a ação da autoridade, comunicando fato que sabe não ter ocorrido
-                (pena: <strong>detenção de 1 a 6 meses</strong>, ou multa).
+                <span className="text-red-500 font-medium">Atenção:</span> a
+                denúncia deve ser feita com responsabilidade e veracidade.
+                Informações falsas podem configurar crime previsto no Código
+                Penal Brasileiro:
                 <br />
                 <br />
-                Ao prosseguir, você declara estar ciente dos termos, limitações
-                e possíveis consequências legais em caso de denúncia falsa.
+                <span className="block border-l-4 border-red-500 pl-3 text-gray-800 italic">
+                  <strong>
+                    Art. 340 – Falsa comunicação de crime ou de contravenção:
+                  </strong>
+                  <br />
+                  Provocar a ação de autoridade, comunicando-lhe a ocorrência de
+                  crime ou contravenção que
+                  <strong> sabe não se ter verificado</strong>.
+                  <br />
+                  <strong>Pena:</strong> detenção de{" "}
+                  <strong>1 a 6 meses</strong>, ou <strong>multa</strong>.
+                </span>
+                <br />
+                Essa conduta prejudica o funcionamento dos órgãos públicos e
+                pode acarretar sanções legais ao denunciante.
+                <br />
+                <br />
+                Ao prosseguir, você declara estar ciente dos{" "}
+                <strong>termos</strong>, das <strong>limitações</strong> e das
+                <strong> possíveis consequências legais</strong> decorrentes do
+                envio de informações inverídicas.
               </DialogDescription>
             </DialogHeader>
+
             <div className="flex items-center space-x-2 py-4">
               <Checkbox
                 id="terms"
