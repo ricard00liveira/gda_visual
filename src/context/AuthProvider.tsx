@@ -11,6 +11,7 @@ type UserType = {
 type AuthContextType = {
   user: UserType | null;
   token: string | null;
+  isLoading: boolean;
   login: (data: { token: string; refresh: string; user: UserType }) => void;
   logout: () => void;
 };
@@ -20,6 +21,7 @@ export const AuthContext = createContext<AuthContextType>(
 );
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<UserType | null>(null);
   const [token, setToken] = useState<string | null>(null);
 
@@ -37,6 +39,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setToken(savedToken);
       setUser(savedUser);
     }
+    setIsLoading(false);
   }, []);
 
   // Login
@@ -70,8 +73,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
-      {children}
+    <AuthContext.Provider value={{ user, token, isLoading, login, logout }}>
+      {!isLoading && children}
     </AuthContext.Provider>
   );
 };
