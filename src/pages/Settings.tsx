@@ -28,7 +28,9 @@ export default function Settings() {
     setTheme(value);
     toast({
       title: "Tema alterado",
-      description: `O tema foi alterado para ${value === 'dark' ? 'escuro' : value === 'light' ? 'claro' : 'sistema'}`,
+      description: `O tema foi alterado para ${
+        value === "dark" ? "escuro" : value === "light" ? "claro" : "sistema"
+      }`,
     });
   };
 
@@ -58,10 +60,7 @@ export default function Settings() {
                   </p>
                 </div>
               </div>
-              <Select
-                value={theme}
-                onValueChange={handleThemeChange}
-              >
+              <Select value={theme} onValueChange={handleThemeChange}>
                 <SelectTrigger className="w-32">
                   <SelectValue />
                 </SelectTrigger>

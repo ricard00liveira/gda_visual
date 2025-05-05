@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Allow: /login
+Allow: /register
+Allow: /forgot-password
+Allow: /renew-password
+Allow: /anonymous
+Allow: /anonymous/success
+Allow: /faq
+
+Disallow: /dashboard
+Disallow: /comum
+Disallow: /profile
+Disallow: /admin
+Disallow: /usuarios

@@ -24,14 +24,14 @@ const RenewPassword = () => {
       setCpf(response.cpf); // Exibe CPF se token for válido
       toast({
         variant: "success",
-        title: "Token validado com sucesso.",
+        title: "Código validado com sucesso.",
         description: "Agora você pode redefinir sua senha.",
         duration: 3000,
       });
     } catch (error) {
       toast({
         variant: "warning",
-        title: "Token inválido",
+        title: "Código inválido",
         description:
           "Por favor, verifique o código de recuperação informado. Caso o erro persista, tente novamente ou solicite um novo código.",
         duration: 4500,

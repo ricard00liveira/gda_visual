@@ -26,8 +26,6 @@ const ForgotPassword = () => {
         description: "Se o usuário existir, um link foi enviado.",
         duration: 3000,
       });
-
-      console.log("[DEBUG] Resposta:", response);
     } catch (err: any) {
       const mensagem =
         err?.response?.data?.error || "Erro ao solicitar recuperação.";

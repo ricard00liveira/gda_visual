@@ -1,27 +1,75 @@
+import { useEffect, useRef, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "@/hooks/use-toast";
+import { updateUserImage } from "@/services/user";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Camera, Mail, User } from "lucide-react";
-import { useRef, useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { updateUserImage } from "@/services/user";
-import { toast } from "@/hooks/use-toast";
 
+function isPWAInstalled(): boolean {
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    (window.navigator as any).standalone === true
+  ); // iOS Safari
+}
 export default function Profile() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const { user } = useAuth();
-  console.log(user);
-  const handleUploadImagem = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const { user, login } = useAuth();
+
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    if (isPWAInstalled()) {
+      console.log("PWA instalado!");
+    } else {
+      console.log("PWA não está instalado.");
+    }
+  }, []);
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user) return;
+    if (!file) return;
+
+    setSelectedFile(file);
+    setPreviewImage(URL.createObjectURL(file));
+    setShowModal(true);
+  };
+
+  const handleConfirmUpload = async () => {
+    if (!selectedFile || !user) return;
 
     try {
-      await updateUserImage(user.cpf, file);
-      toast({ title: "Foto atualizada com sucesso!" });
-      // window.location.reload();
-    } catch (error) {
+      const updatedUser = await updateUserImage(user.cpf, selectedFile);
+      toast({
+        title: "Foto atualizada com sucesso!",
+        variant: "success",
+        duration: 2000,
+      });
+
+      login({
+        token: localStorage.getItem("token") || "",
+        refresh: localStorage.getItem("refreshToken") || "",
+        user: {
+          ...user,
+          imagem_perfil_url: updatedUser.imagem_perfil,
+        },
+      });
+
+      setShowModal(false);
+      setPreviewImage(null);
+      setSelectedFile(null);
+    } catch {
       toast({
         variant: "destructive",
         title: "Erro ao atualizar imagem",
@@ -29,11 +77,35 @@ export default function Profile() {
       });
     }
   };
+
   return (
     <div className="container max-w-4xl py-4">
       <h1 className="text-2xl font-bold mb-6">Meu Perfil</h1>
 
       <div className="grid gap-6">
+        {/* Modal de pré-visualização */}
+        <Dialog open={showModal} onOpenChange={setShowModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirmar nova foto</DialogTitle>
+            </DialogHeader>
+            {previewImage && (
+              <img
+                src={previewImage}
+                alt="Pré-visualização"
+                className="w-32 h-32 rounded-full object-cover mx-auto my-4"
+              />
+            )}
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowModal(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleConfirmUpload}>Confirmar</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Foto do perfil */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg font-medium">
@@ -60,7 +132,7 @@ export default function Profile() {
                   accept="image/*"
                   className="hidden"
                   ref={fileInputRef}
-                  onChange={handleUploadImagem}
+                  onChange={handleFileSelect}
                 />
 
                 <Button
@@ -82,6 +154,7 @@ export default function Profile() {
           </CardContent>
         </Card>
 
+        {/* Informações pessoais */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg font-medium">
