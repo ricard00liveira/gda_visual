@@ -25,6 +25,7 @@ import SuccessReport from "@/pages/SuccessReport";
 import PrivateRoute from "./PrivateRoute";
 import MyReports from "@/pages/common/MyReports";
 import CommonNewReport from "@/pages/common/NewReport";
+import PublicLayout from "@/layouts/PublicLayout";
 
 const ErrorPage = () => {
   return (
@@ -39,14 +40,19 @@ const ErrorPage = () => {
 
 export const createRouter = () =>
   createBrowserRouter([
-    { path: "/", element: <Index />, errorElement: <ErrorPage /> },
-    { path: "/login", element: <Login /> },
-    { path: "/register", element: <Register /> },
-    { path: "/forgot-password", element: <ForgotPassword /> },
-    { path: "/renew-password", element: <RenewPassword /> },
-    { path: "/anonymous", element: <Anonymous /> },
-    { path: "/anonymous/success", element: <SuccessAnonymous /> },
-    { path: "/faq", element: <FAQ /> },
+    {
+      element: <PublicLayout />, // ✅ aplica tema claro
+      children: [
+        { path: "/", element: <Index /> },
+        { path: "/login", element: <Login /> },
+        { path: "/register", element: <Register /> },
+        { path: "/forgot-password", element: <ForgotPassword /> },
+        { path: "/renew-password", element: <RenewPassword /> },
+        { path: "/anonymous", element: <Anonymous /> },
+        { path: "/anonymous/success", element: <SuccessAnonymous /> },
+        { path: "/faq", element: <FAQ /> },
+      ],
+    },
 
     // Rota protegida para Operadores e Administradores
     {

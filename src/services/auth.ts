@@ -8,9 +8,13 @@ export interface LoginResponse {
 export interface ProfileResponse {
   nome: string;
   cpf: string;
-  tipo: string;
+  tipo: "comum" | "operador" | "adm";
   email: string;
   imagem_perfil_url?: string;
+  conf_tema: string;
+  conf_notEmail: boolean;
+  conf_notPush: boolean;
+  conf_notNewDenuncia: boolean;
 }
 
 export interface RegisterPayload {

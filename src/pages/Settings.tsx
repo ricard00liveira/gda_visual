@@ -13,25 +13,83 @@ import { Bell, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { updateUserPreferences } from "@/services/users";
 
 export default function Settings() {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
+  const { user, login } = useAuth();
 
-  // Aguarda a montagem do componente para evitar hidratação incorreta
+  const [conf_tema, setConfTema] = useState<"light" | "dark">("light");
+  const [conf_not_email, setNotEmail] = useState(false);
+  const [conf_not_push, setNotPush] = useState(false);
+  const [conf_not_newdenun, setNotNewDenun] = useState(false);
+
   useEffect(() => {
     setMounted(true);
-  }, []);
+    if (user) {
+      const tema = localStorage.getItem("conf_tema") as "light" | "dark";
+      const notEmail = localStorage.getItem("conf_not_email") === "true";
+      const notPush = localStorage.getItem("conf_not_push") === "true";
+      const notNewDenun = localStorage.getItem("conf_not_newdenun") === "true";
 
-  const handleThemeChange = (value: string) => {
-    setTheme(value);
+      setConfTema(tema);
+      setNotEmail(notEmail);
+      setNotPush(notPush);
+      setNotNewDenun(notNewDenun);
+      setTheme(tema);
+    }
+  }, [user, setTheme]);
+
+  const handleThemeChange = (value: "light" | "dark") => {
+    setConfTema(value); // controla o seletor
+    setTheme(value); // altera visualmente o site
+
+    localStorage.setItem("conf_tema", value); // opcional, já que AuthProvider trata isso
+
     toast({
       title: "Tema alterado",
-      description: `O tema foi alterado para ${
-        value === "dark" ? "escuro" : value === "light" ? "claro" : "sistema"
-      }`,
+      description: `Tema alterado para ${
+        value === "dark" ? "escuro" : "claro"
+      }.`,
     });
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+
+    try {
+      await updateUserPreferences(user.cpf, {
+        conf_tema,
+        conf_not_email,
+        conf_not_push,
+        conf_not_newdenun,
+      });
+
+      localStorage.setItem("conf_tema", conf_tema);
+      localStorage.setItem("conf_not_email", String(conf_not_email));
+      localStorage.setItem("conf_not_push", String(conf_not_push));
+      localStorage.setItem("conf_not_newdenun", String(conf_not_newdenun));
+
+      login({
+        token: localStorage.getItem("token") || "",
+        refresh: localStorage.getItem("refreshToken") || "",
+        user,
+        conf_tema,
+        conf_notEmail: conf_not_email,
+        conf_notPush: conf_not_push,
+        conf_notNewDenuncia: conf_not_newdenun,
+      });
+
+      toast({
+        title: "Preferências salvas",
+        variant: "success",
+      });
+    } catch (error) {
+      toast({ title: "Erro ao salvar", variant: "destructive" });
+    }
   };
 
   if (!mounted) return null;
@@ -48,7 +106,7 @@ export default function Settings() {
           <CardContent>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                {theme === "light" ? (
+                {conf_tema === "light" ? (
                   <Sun className="h-5 w-5" />
                 ) : (
                   <Moon className="h-5 w-5" />
@@ -60,14 +118,13 @@ export default function Settings() {
                   </p>
                 </div>
               </div>
-              <Select value={theme} onValueChange={handleThemeChange}>
+              <Select value={conf_tema} onValueChange={handleThemeChange}>
                 <SelectTrigger className="w-32">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="light">Claro</SelectItem>
                   <SelectItem value="dark">Escuro</SelectItem>
-                  <SelectItem value="system">Sistema</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -89,7 +146,7 @@ export default function Settings() {
                   </p>
                 </div>
               </div>
-              <Switch defaultChecked />
+              <Switch checked={conf_not_email} onCheckedChange={setNotEmail} />
             </div>
 
             <div className="flex items-center justify-between">
@@ -102,7 +159,7 @@ export default function Settings() {
                   </p>
                 </div>
               </div>
-              <Switch defaultChecked />
+              <Switch checked={conf_not_push} onCheckedChange={setNotPush} />
             </div>
 
             <div className="flex items-center justify-between">
@@ -115,14 +172,19 @@ export default function Settings() {
                   </p>
                 </div>
               </div>
-              <Switch defaultChecked />
+              <Switch
+                checked={conf_not_newdenun}
+                onCheckedChange={setNotNewDenun}
+              />
             </div>
           </CardContent>
         </Card>
 
         <div className="flex justify-end gap-2">
-          <Button variant="outline">Cancelar</Button>
-          <Button>Salvar alterações</Button>
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSave}>Salvar alterações</Button>
         </div>
       </div>
     </div>

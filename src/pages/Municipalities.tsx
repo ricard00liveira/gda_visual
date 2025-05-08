@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import Loading from "@/components/ui/loading";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import {
   getComarcas,
@@ -53,18 +54,22 @@ const Municipalities = () => {
   const [comarcaSelecionadaMunicipio, setComarcaSelecionadaMunicipio] =
     useState<number | "">("");
   const [filtroComarcaId, setFiltroComarcaId] = useState<number | "">("");
+  const [isloading, setIsloading] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setIsloading(true);
         const [comarcasData, municipiosData] = await Promise.all([
           getComarcas(),
           getMunicipios(),
         ]);
         setComarcas(comarcasData);
         setMunicipios(municipiosData);
+        setIsloading(false);
       } catch (error) {
         console.error("Erro ao buscar comarcas ou municípios:", error);
+        setIsloading(false);
       }
     };
 
@@ -253,156 +258,82 @@ const Municipalities = () => {
           Gerenciamento de Municípios
         </h1>
       </div>
+      {isloading ? (
+        <Loading>Carregando...</Loading>
+      ) : (
+        <Tabs defaultValue="districts" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="districts">Comarcas</TabsTrigger>
+            <TabsTrigger value="municipalities">Municípios</TabsTrigger>
+          </TabsList>
 
-      <Tabs defaultValue="districts" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="districts">Comarcas</TabsTrigger>
-          <TabsTrigger value="municipalities">Municípios</TabsTrigger>
-        </TabsList>
+          <TabsContent value="districts" className="space-y-4">
+            <div className="flex justify-end">
+              <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nova Comarca
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Nova Comarca</DialogTitle>
+                    <DialogDescription>
+                      Informe o nome da nova comarca e clique em "Salvar" para
+                      registrá-la.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <Input
+                      placeholder="Nome da comarca"
+                      value={novaComarca}
+                      onChange={(e) => setNovaComarca(e.target.value)}
+                    />
+                  </div>
+                  <DialogFooter className="pt-4">
+                    <Button onClick={handleCreateComarca}>Salvar</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
 
-        <TabsContent value="districts" className="space-y-4">
-          <div className="flex justify-end">
-            <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nova Comarca
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Nova Comarca</DialogTitle>
-                  <DialogDescription>
-                    Informe o nome da nova comarca e clique em "Salvar" para
-                    registrá-la.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <Input
-                    placeholder="Nome da comarca"
-                    value={novaComarca}
-                    onChange={(e) => setNovaComarca(e.target.value)}
-                  />
-                </div>
-                <DialogFooter className="pt-4">
-                  <Button onClick={handleCreateComarca}>Salvar</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome da Comarca</TableHead>
-                  <TableHead className="w-[200px] text-center">
-                    Quantidade de Municípios
-                  </TableHead>
-                  <TableHead className="w-[100px] text-center">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {comarcas.map((comarca) => {
-                  const total = municipios.filter(
-                    (m) => m.comarca === comarca.id
-                  ).length;
-                  return (
-                    <TableRow key={comarca.id}>
-                      <TableCell className="font-medium">
-                        {comarca.nome}
-                      </TableCell>
-                      <TableCell className="text-center">{total}</TableCell>
-                      <TableCell className="flex justify-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEditarComarca(comarca)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleExcluirComarca(comarca)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        </TabsContent>
-
-        <TabsContent
-          value="municipalities"
-          className="space-y-4 transition-all duration-300"
-        >
-          <div className="flex items-center gap-4 justify-end">
-            <select
-              className="border rounded-md p-2"
-              value={filtroComarcaId}
-              onChange={(e) => {
-                const value = e.target.value;
-                setFiltroComarcaId(value === "" ? "" : Number(value));
-              }}
-            >
-              <option value="">Todas as comarcas</option>
-              {comarcas.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nome}
-                </option>
-              ))}
-            </select>
-            <Button onClick={handleAbrirNovoMunicipio}>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Município
-            </Button>
-          </div>
-
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Município</TableHead>
-                  <TableHead className="w-[200px] text-center">
-                    Comarca
-                  </TableHead>
-                  <TableHead className="w-[100px] text-center">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {municipios
-                  .filter(
-                    (m) => !filtroComarcaId || m.comarca === filtroComarcaId
-                  )
-                  .map((municipio) => {
-                    const comarca = comarcas.find(
-                      (c) => c.id === municipio.comarca
-                    );
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome da Comarca</TableHead>
+                    <TableHead className="w-[200px] text-center">
+                      Quantidade de Municípios
+                    </TableHead>
+                    <TableHead className="w-[100px] text-center">
+                      Ações
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {comarcas.map((comarca) => {
+                    const total = municipios.filter(
+                      (m) => m.comarca === comarca.id
+                    ).length;
                     return (
-                      <TableRow key={municipio.id}>
+                      <TableRow key={comarca.id}>
                         <TableCell className="font-medium">
-                          {municipio.nome}
+                          {comarca.nome}
                         </TableCell>
-                        <TableCell className="text-center">
-                          {comarca?.nome || "–"}
-                        </TableCell>
+                        <TableCell className="text-center">{total}</TableCell>
                         <TableCell className="flex justify-center gap-2">
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleEditarMunicipio(municipio)}
+                            onClick={() => handleEditarComarca(comarca)}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleExcluirMunicipio(municipio)}
+                            onClick={() => handleExcluirComarca(comarca)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -410,11 +341,92 @@ const Municipalities = () => {
                       </TableRow>
                     );
                   })}
-              </TableBody>
-            </Table>
-          </div>
-        </TabsContent>
-      </Tabs>
+                </TableBody>
+              </Table>
+            </div>
+          </TabsContent>
+
+          <TabsContent
+            value="municipalities"
+            className="space-y-4 transition-all duration-300"
+          >
+            <div className="flex items-center gap-4 justify-end">
+              <select
+                className="border rounded-md p-2"
+                value={filtroComarcaId}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setFiltroComarcaId(value === "" ? "" : Number(value));
+                }}
+              >
+                <option value="">Todas as comarcas</option>
+                {comarcas.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome}
+                  </option>
+                ))}
+              </select>
+              <Button onClick={handleAbrirNovoMunicipio}>
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Município
+              </Button>
+            </div>
+
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Município</TableHead>
+                    <TableHead className="w-[200px] text-center">
+                      Comarca
+                    </TableHead>
+                    <TableHead className="w-[100px] text-center">
+                      Ações
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {municipios
+                    .filter(
+                      (m) => !filtroComarcaId || m.comarca === filtroComarcaId
+                    )
+                    .map((municipio) => {
+                      const comarca = comarcas.find(
+                        (c) => c.id === municipio.comarca
+                      );
+                      return (
+                        <TableRow key={municipio.id}>
+                          <TableCell className="font-medium">
+                            {municipio.nome}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {comarca?.nome || "–"}
+                          </TableCell>
+                          <TableCell className="flex justify-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEditarMunicipio(municipio)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleExcluirMunicipio(municipio)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                </TableBody>
+              </Table>
+            </div>
+          </TabsContent>
+        </Tabs>
+      )}
 
       <Dialog open={editarDialog} onOpenChange={setEditarDialog}>
         <DialogContent>

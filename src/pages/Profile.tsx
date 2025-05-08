@@ -64,6 +64,11 @@ export default function Profile() {
           ...user,
           imagem_perfil_url: updatedUser.imagem_perfil,
         },
+        conf_tema: localStorage.getItem("conf_tema") as "light" | "dark",
+        conf_notEmail: localStorage.getItem("conf_notEmail") === "true",
+        conf_notPush: localStorage.getItem("conf_notPush") === "true",
+        conf_notNewDenuncia:
+          localStorage.getItem("conf_notNewDenuncia") === "true",
       });
 
       setShowModal(false);

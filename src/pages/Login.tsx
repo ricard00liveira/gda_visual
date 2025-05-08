@@ -6,11 +6,13 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { getProfile, loginRequest } from "@/services/auth";
+import { useTheme } from "next-themes";
 
 const Login = () => {
   const navigate = useNavigate();
   const { login, user, logout } = useAuth();
   const { toast } = useToast();
+  const { setTheme } = useTheme();
 
   const [cpf, setCpf] = useState("");
   const [password, setPassword] = useState("");
@@ -27,7 +29,7 @@ const Login = () => {
       });
       return;
     }
-    if (cpf.length !== 11 || !/^\d+$/.test(cpf)) {
+    if (cpf.length !== 11 || !/^[0-9]+$/.test(cpf)) {
       toast({
         title: "Atenção",
         description:
@@ -43,6 +45,7 @@ const Login = () => {
       const { access, refresh } = await loginRequest(cpf, password);
       const profile = await getProfile(access);
       const tipo = profile.tipo;
+
       if (!["comum", "operador", "adm"].includes(tipo)) {
         throw new Error("Tipo de usuário inválido recebido da API.");
       }
@@ -55,9 +58,27 @@ const Login = () => {
         imagem_perfil_url: profile.imagem_perfil_url,
       };
 
-      login({ token: access, refresh, user });
+      const conf_tema = profile.conf_tema || "light";
+      const conf_notEmail = profile.conf_notEmail || false;
+      const conf_notPush = profile.conf_notPush || false;
+      const conf_notNewDenuncia = profile.conf_notNewDenuncia || false;
+
+      login({
+        token: access,
+        refresh,
+        user,
+        conf_tema,
+        conf_notEmail,
+        conf_notPush,
+        conf_notNewDenuncia,
+      });
+
+      if (["light", "dark"].includes(conf_tema)) {
+        setTheme(conf_tema as "light" | "dark");
+      }
+
       navigate(user.tipo === "comum" ? "/comum" : "/dashboard");
-    } catch (err) {
+    } catch (err: any) {
       if (err.response?.status === 401) {
         toast({
           variant: "warning",
@@ -66,6 +87,11 @@ const Login = () => {
           duration: 3000,
         });
         setPassword("");
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Erro ao tentar logar",
+        });
       }
     } finally {
       setLoading(false);
