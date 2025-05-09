@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { updateUserImage } from "@/services/user";
-
+import { updateUser } from "@/services/user";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import Loading from "@/components/ui/loading";
 import {
   Dialog,
   DialogContent,
@@ -14,21 +15,25 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Camera, Mail, User } from "lucide-react";
+import { set } from "date-fns";
 
 function isPWAInstalled(): boolean {
   return (
     window.matchMedia("(display-mode: standalone)").matches ||
     (window.navigator as any).standalone === true
-  ); // iOS Safari
+  );
 }
+
 export default function Profile() {
+  const [isloading, setIsloading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const { user, login } = useAuth();
-
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [nome, setNome] = useState(user?.nome || "");
+  const [email, setEmail] = useState(user?.email || "");
 
   useEffect(() => {
     if (isPWAInstalled()) {
@@ -37,6 +42,14 @@ export default function Profile() {
       console.log("PWA não está instalado.");
     }
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      setNome(user.nome);
+      setEmail(user.email);
+    }
+  }, [user]);
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -50,6 +63,7 @@ export default function Profile() {
     if (!selectedFile || !user) return;
 
     try {
+      setIsloading(true);
       const updatedUser = await updateUserImage(user.cpf, selectedFile);
       toast({
         title: "Foto atualizada com sucesso!",
@@ -74,12 +88,67 @@ export default function Profile() {
       setShowModal(false);
       setPreviewImage(null);
       setSelectedFile(null);
+      setIsloading(false);
     } catch {
       toast({
         variant: "destructive",
         title: "Erro ao atualizar imagem",
         description: "Verifique o formato ou tente novamente.",
       });
+    }
+  };
+
+  const handleSalvarEdicao = async () => {
+    if (!user) return;
+
+    if (
+      !nome.trim() ||
+      !email.trim() ||
+      nome.length < 3 ||
+      email.length < 3 ||
+      !/\S+@\S+\.\S+/.test(email)
+    ) {
+      toast({
+        title: "Preencha todos os campos corretamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (nome === user.nome && email === user.email) {
+      setIsEditing(false);
+      return;
+    }
+
+    try {
+      const updatedUser = await updateUser(user.cpf, { nome, email });
+
+      toast({ title: "Perfil atualizado com sucesso!", variant: "success" });
+
+      login({
+        token: localStorage.getItem("token") || "",
+        refresh: localStorage.getItem("refreshToken") || "",
+        user: {
+          ...user,
+          nome: updatedUser.nome,
+          email: updatedUser.email,
+        },
+        conf_tema: localStorage.getItem("conf_tema") as "light" | "dark",
+        conf_notEmail: localStorage.getItem("conf_notEmail") === "true",
+        conf_notPush: localStorage.getItem("conf_notPush") === "true",
+        conf_notNewDenuncia:
+          localStorage.getItem("conf_notNewDenuncia") === "true",
+      });
+      setIsEditing(false);
+    } catch (error) {
+      if (error.response?.status === 409) {
+        toast({
+          title: "Erro no campo e-mail!",
+          description: error.response.data.error,
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "Erro ao salvar perfil", variant: "destructive" });
+      }
     }
   };
 
@@ -101,12 +170,16 @@ export default function Profile() {
                 className="w-32 h-32 rounded-full object-cover mx-auto my-4"
               />
             )}
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowModal(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleConfirmUpload}>Confirmar</Button>
-            </div>
+            {isloading ? (
+              <Loading>Carregando...</Loading>
+            ) : (
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowModal(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleConfirmUpload}>Confirmar</Button>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
 
@@ -172,8 +245,9 @@ export default function Profile() {
                 <Label htmlFor="name">Nome completo</Label>
                 <Input
                   id="name"
-                  value={user?.nome || ""}
+                  value={nome}
                   disabled={!isEditing}
+                  onChange={(e) => setNome(e.target.value)}
                 />
               </div>
 
@@ -184,8 +258,9 @@ export default function Profile() {
                   <Input
                     id="email"
                     className="pl-9"
-                    value={user?.email || ""}
+                    value={email}
                     disabled={!isEditing}
+                    onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
               </div>
@@ -199,7 +274,7 @@ export default function Profile() {
                     >
                       Cancelar
                     </Button>
-                    <Button onClick={() => setIsEditing(false)}>Salvar</Button>
+                    <Button onClick={handleSalvarEdicao}>Salvar</Button>
                   </>
                 ) : (
                   <Button onClick={() => setIsEditing(true)}>Editar</Button>

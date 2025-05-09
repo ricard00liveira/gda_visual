@@ -7,6 +7,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { getProfile, loginRequest } from "@/services/auth";
 import { useTheme } from "next-themes";
+import { formatCPF } from "@/lib/formatCPF";
+import { unmaskCPF } from "@/lib/unmaskCPF";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -20,7 +22,8 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!cpf.trim() || !password.trim()) {
+    let cpfValido = unmaskCPF(cpf);
+    if (!cpfValido.trim() || !password.trim()) {
       toast({
         title: "Campos obrigatórios",
         description: "CPF e senha não podem estar vazios.",
@@ -29,7 +32,7 @@ const Login = () => {
       });
       return;
     }
-    if (cpf.length !== 11 || !/^[0-9]+$/.test(cpf)) {
+    if (cpfValido.length !== 11 || !/^[0-9]+$/.test(cpfValido)) {
       toast({
         title: "Atenção",
         description:
@@ -42,7 +45,7 @@ const Login = () => {
 
     setLoading(true);
     try {
-      const { access, refresh } = await loginRequest(cpf, password);
+      const { access, refresh } = await loginRequest(cpfValido, password);
       const profile = await getProfile(access);
       const tipo = profile.tipo;
 
@@ -105,7 +108,6 @@ const Login = () => {
       navigate("/dashboard");
     }
   };
-
   return (
     <div className="public-page min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <div className="w-full max-w-[1200px] flex flex-col lg:flex-row border border-black rounded-lg overflow-hidden shadow-lg">
@@ -184,9 +186,10 @@ const Login = () => {
                     <Input
                       type="text"
                       value={cpf}
-                      onChange={(e) => setCpf(e.target.value)}
+                      onChange={(e) => setCpf(formatCPF(e.target.value))}
                       className="h-12"
                       disabled={loading}
+                      maxLength={14}
                       placeholder="Somente números"
                       required
                     />

@@ -5,7 +5,9 @@ import { ArrowLeft, ArrowRight, Leaf, LogIn } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { registerUser } from "@/services/auth";
-
+import { formatCPF } from "@/lib/formatCPF";
+import { unmaskCPF } from "@/lib/unmaskCPF";
+import { validateCpf } from "@/lib/validateCPF";
 const Register = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -24,14 +26,14 @@ const Register = () => {
     confirmPassword?: boolean;
   }>({});
 
-  const validateCpf = (value: string) => /^[0-9]{11}$/.test(value);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("CPF:", cpf);
+    let cpfValido = unmaskCPF(cpf);
     setError(null);
     setLoading(true);
     const errors: typeof fieldErrors = {
-      cpf: !validateCpf(cpf),
+      cpf: !validateCpf(cpfValido),
       nome: nome.trim().length < 3,
       email: !email.includes("@"),
       password: password.length < 6,
@@ -40,6 +42,7 @@ const Register = () => {
 
     setFieldErrors(errors);
     if (Object.values(errors).some(Boolean)) {
+      console.log("Errors:", errors);
       toast({
         title: "Atenção!",
         description: "Alguns campos estão inválidos.",
@@ -51,7 +54,7 @@ const Register = () => {
     }
     try {
       await registerUser({
-        cpf,
+        cpf: cpfValido,
         nome,
         email,
         password,
@@ -109,7 +112,6 @@ const Register = () => {
       setLoading(false);
     }
   };
-
   return (
     <div className="public-page min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <div className="w-full max-w-[1200px] flex flex-col lg:flex-row border border-black rounded-lg overflow-hidden shadow-lg">
@@ -170,7 +172,8 @@ const Register = () => {
                   <Input
                     type="text"
                     value={cpf}
-                    onChange={(e) => setCpf(e.target.value)}
+                    onChange={(e) => setCpf(formatCPF(e.target.value))}
+                    maxLength={14}
                     placeholder="Somente números (sem pontos ou traços)"
                     className={`h-12 ${
                       fieldErrors.cpf ? "border-red-500" : ""

@@ -19,3 +19,11 @@ export async function removeUserImage(cpf: string) {
   });
   return response.data;
 }
+
+export async function updateUser(cpf: string, data: { email: any; nome: any }) {
+  const response = await api.patch(`/usuarios/${cpf}/update/`, {
+    email: data.email,
+    nome: data.nome,
+  });
+  return response.data;
+}

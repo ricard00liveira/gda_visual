@@ -31,6 +31,23 @@ export interface UserDetail {
   user_permissions: string[];
 }
 
+export interface UsuarioCreatePayload {
+  cpf: string;
+  nome: string;
+  email: string;
+  telefone: string | null;
+  tipo_usuario: "comum" | "operador" | "adm";
+  is_active: boolean;
+  is_staff: boolean;
+  is_superuser: boolean;
+  self_registration: boolean;
+  conf_tema: "light" | "dark";
+  conf_not_email: boolean;
+  conf_not_push: boolean;
+  conf_not_newdenun: boolean;
+  password: string | "novo";
+}
+
 export interface UserDetailResponse {
   usuario: UserDetail;
   denuncias: Report[];
@@ -38,11 +55,6 @@ export interface UserDetailResponse {
 
 export const getUsuarios = async () => {
   const res = await api.get("/usuarios/");
-  return res.data;
-};
-
-export const createUsuario = async (data: Partial<Usuario>) => {
-  const res = await api.post("/usuarios/create/", data);
   return res.data;
 };
 
@@ -84,3 +96,26 @@ export const getUserDetail = async (
   const response = await api.get<UserDetailResponse>(`/usuarios/${cpf}/read/`);
   return response.data;
 };
+
+export async function updateUser(
+  cpf: string,
+  data: {
+    nome: string;
+    email: string;
+    is_active: boolean;
+    is_staff: boolean;
+    self_registration: boolean;
+    conf_tema: "light" | "dark";
+    conf_not_email: boolean;
+    conf_not_push: boolean;
+    conf_not_newdenun?: boolean; // só se não for usuário comum
+  }
+) {
+  const response = await api.patch(`/usuarios/${cpf}/update/`, data);
+  return response.data;
+}
+
+export async function createUsuario(data: UsuarioCreatePayload) {
+  const response = await api.post("/usuarios/create/", data);
+  return response.data;
+}

@@ -47,7 +47,24 @@ export const TopBar = () => {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <div className="flex items-center gap-3 bg-card rounded-full px-4 py-2 shadow-sm border cursor-pointer">
-            <UserCircle2 className="w-8 h-8 text-muted-foreground flex-shrink-0" />
+            {user?.imagem_perfil_url ? (
+              <img
+                src={user.imagem_perfil_url}
+                alt="Avatar"
+                className="w-8 h-8 rounded-full object-cover flex-shrink-0 border"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                  (
+                    e.target as HTMLImageElement
+                  ).nextElementSibling?.classList.remove("hidden");
+                }}
+              />
+            ) : null}
+            <UserCircle2
+              className={`w-8 h-8 text-muted-foreground flex-shrink-0 ${
+                user?.imagem_perfil_url ? "hidden" : ""
+              }`}
+            />
             <div className="text-sm">
               <p className="font-medium">{user?.nome || "Carregando..."}</p>
               <p className="text-muted-foreground">

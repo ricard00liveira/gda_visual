@@ -44,10 +44,10 @@ export default function Settings() {
   }, [user, setTheme]);
 
   const handleThemeChange = (value: "light" | "dark") => {
-    setConfTema(value); // controla o seletor
-    setTheme(value); // altera visualmente o site
+    setConfTema(value);
+    setTheme(value);
 
-    localStorage.setItem("conf_tema", value); // opcional, já que AuthProvider trata isso
+    localStorage.setItem("conf_tema", value);
 
     toast({
       title: "Tema alterado",
