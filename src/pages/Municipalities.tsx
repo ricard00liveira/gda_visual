@@ -57,7 +57,9 @@ const Municipalities = () => {
   const [isloading, setIsloading] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchData = async () => {
+      if (!isMounted) return;
       try {
         setIsloading(true);
         const [comarcasData, municipiosData] = await Promise.all([
@@ -74,6 +76,9 @@ const Municipalities = () => {
     };
 
     fetchData();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleCreateComarca = async () => {

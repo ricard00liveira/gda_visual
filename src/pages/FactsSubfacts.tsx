@@ -52,7 +52,9 @@ const FactsSubfacts = () => {
   const [isloading, setIsloading] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchData = async () => {
+      if (!isMounted) return;
       try {
         setIsloading(true);
         const factsData = await getFacts();
@@ -77,6 +79,9 @@ const FactsSubfacts = () => {
     };
 
     fetchData();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleSalvarFato = async () => {

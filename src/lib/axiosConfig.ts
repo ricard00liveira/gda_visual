@@ -1,11 +1,24 @@
 import axios from "axios";
 
 const api = axios.create({
-  //baseURL: "https://back.gda-app.xyz/api/",
   baseURL: "http://localhost:8000/api/",
+  //baseURL: "https://back.gda-app.xyz/api/",
 });
 
-// Interceptor para adicionar o token automaticamente
+let isRefreshing = false;
+let failedQueue: {
+  resolve: (value?: unknown) => void;
+  reject: (reason?: any) => void;
+}[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) prom.reject(error);
+    else prom.resolve(token);
+  });
+  failedQueue = [];
+};
+
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -17,7 +30,6 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-/// Interceptor para renovar o token se receber um erro 401
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -28,18 +40,35 @@ api.interceptors.response.use(
       originalRequest?.url?.includes("/login") ||
       originalRequest?.url?.includes("/register");
 
-    // Se a requisição falhou em uma rota pública (login, token, etc), não tentar renovar nem redirecionar
-    if (error.response && error.response.status === 401 && !isAuthRoute) {
-      console.warn("Token expirado. Tentando renovar...");
+    if (
+      error.response &&
+      error.response.status === 401 &&
+      !originalRequest._retry &&
+      !isAuthRoute
+    ) {
+      originalRequest._retry = true;
 
       const refreshToken = localStorage.getItem("refreshToken");
-
       if (!refreshToken) {
-        console.warn("Sem refresh token. Redirecionando para login...");
         localStorage.clear();
         window.location.href = "/login";
         return Promise.reject(error);
       }
+
+      if (isRefreshing) {
+        // Aguarda o token ser renovado por outra requisição
+        return new Promise((resolve, reject) => {
+          failedQueue.push({
+            resolve: (token) => {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              resolve(api(originalRequest));
+            },
+            reject: (err) => reject(err),
+          });
+        });
+      }
+
+      isRefreshing = true;
 
       try {
         const refreshResponse = await axios.post(
@@ -49,15 +78,16 @@ api.interceptors.response.use(
 
         const newAccessToken = refreshResponse.data.access;
         localStorage.setItem("token", newAccessToken);
-
-        // Refaz a requisição original com o novo token
+        processQueue(null, newAccessToken);
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-        return api.request(originalRequest);
+        return api(originalRequest);
       } catch (refreshError) {
-        console.error("Erro ao renovar token:", refreshError);
+        processQueue(refreshError, null);
         localStorage.clear();
         window.location.href = "/login";
         return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
 

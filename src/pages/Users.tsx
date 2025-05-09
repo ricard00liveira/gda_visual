@@ -8,7 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Plus, Pencil, Trash2, Eye } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, CheckCircle, XCircle } from "lucide-react";
 import {
   getUsuarios,
   deleteUsuario,
@@ -50,7 +50,9 @@ const Users = () => {
   );
 
   useEffect(() => {
+    let isMounted = true;
     const fetchUsuarios = async () => {
+      if (!isMounted) return;
       try {
         const data = await getUsuarios();
         setUsuarios(data);
@@ -62,6 +64,9 @@ const Users = () => {
       }
     };
     fetchUsuarios();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleExcluirUsuario = async (cpf: string) => {
@@ -100,6 +105,13 @@ const Users = () => {
       u.cpf.includes(filtroBusca);
     return correspondeTipo && correspondeBusca;
   });
+
+  const BooleanIcon = ({ value }: { value: boolean }) =>
+    value ? (
+      <CheckCircle className="inline h-5 w-5 text-emerald-500" />
+    ) : (
+      <XCircle className="inline h-5 w-5 text-destructive" />
+    );
 
   return (
     <div className="space-y-6">
@@ -148,7 +160,7 @@ const Users = () => {
               usuariosFiltrados.map((usuario) => (
                 <TableRow key={usuario.cpf}>
                   <TableCell>{usuario.nome}</TableCell>
-                  <TableCell>{usuario.cpf}</TableCell>
+                  <TableCell>{formatCPF(usuario.cpf)}</TableCell>
                   <TableCell>{usuario.email}</TableCell>
                   <TableCell>
                     {tipoUsuarioLabel[usuario.tipo_usuario] || "-"}
@@ -210,10 +222,10 @@ const Users = () => {
                   <strong>Nome:</strong> {usuarioSelecionado.nome}
                 </p>
                 <p>
-                  <strong>CPF:</strong> {usuarioSelecionado.cpf}
+                  <strong>CPF:</strong> {formatCPF(usuarioSelecionado.cpf)}
                 </p>
                 <p>
-                  <strong>Email:</strong> {usuarioSelecionado.email}
+                  <strong>E-mail:</strong> {usuarioSelecionado.email}
                 </p>
                 <p>
                   <strong>Telefone:</strong>{" "}
@@ -234,19 +246,19 @@ const Users = () => {
               <TabsContent value="config" className="space-y-2 pt-4">
                 <p>
                   <strong>Superusuário:</strong>{" "}
-                  {usuarioSelecionado.is_superuser ? "Sim" : "Não"}
+                  <BooleanIcon value={usuarioSelecionado.is_superuser} />
                 </p>
                 <p>
                   <strong>Ativo:</strong>{" "}
-                  {usuarioSelecionado.is_active ? "Sim" : "Não"}
+                  <BooleanIcon value={usuarioSelecionado.is_active} />
                 </p>
                 <p>
                   <strong>Staff:</strong>{" "}
-                  {usuarioSelecionado.is_staff ? "Sim" : "Não"}
+                  <BooleanIcon value={usuarioSelecionado.is_staff} />
                 </p>
                 <p>
                   <strong>Autocadastro:</strong>{" "}
-                  {usuarioSelecionado.self_registration ? "Sim" : "Não"}
+                  <BooleanIcon value={usuarioSelecionado.self_registration} />
                 </p>
               </TabsContent>
 
@@ -286,9 +298,9 @@ const Users = () => {
                       <p>
                         <strong>Fato:</strong> {d.fato?.nome || "–"}
                       </p>
-                      <p>
+                      {/* <p>
                         <strong>Subfato:</strong> {d.subfato?.nome || "–"}
-                      </p>
+                      </p> */}
                     </div>
                   ))
                 ) : (
@@ -313,3 +325,7 @@ const Users = () => {
 };
 
 export default Users;
+
+function formatCPF(cpf: string): string {
+  return cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
+}
