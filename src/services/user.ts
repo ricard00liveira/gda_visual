@@ -9,7 +9,6 @@ export async function updateUserImage(cpf: string, imagem: File) {
       "Content-Type": "multipart/form-data",
     },
   });
-  console.log(response.data);
   return response.data;
 }
 
@@ -24,6 +23,17 @@ export async function updateUser(cpf: string, data: { email: any; nome: any }) {
   const response = await api.patch(`/usuarios/${cpf}/update/`, {
     email: data.email,
     nome: data.nome,
+  });
+  return response.data;
+}
+
+export async function updateUserPassword(data: {
+  atualSenha: any;
+  novaSenha: any;
+}) {
+  const response = await api.patch(`/usuarios/alterar-senha/`, {
+    senha_atual: data.atualSenha,
+    nova_senha: data.novaSenha,
   });
   return response.data;
 }

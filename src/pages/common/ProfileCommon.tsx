@@ -1,21 +1,19 @@
-import { useEffect, useRef, useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { toast } from "@/hooks/use-toast";
-import { updateUserImage } from "@/services/user";
-import { updateUser } from "@/services/user";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import Loading from "@/components/ui/loading";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import Loading from "@/components/ui/loading";
+import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { updateUser, updateUserImage } from "@/services/user";
 import { Camera, Mail, User } from "lucide-react";
-import { set } from "date-fns";
+import { useEffect, useRef, useState } from "react";
 
 function isPWAInstalled(): boolean {
   return (
@@ -24,7 +22,7 @@ function isPWAInstalled(): boolean {
   );
 }
 
-export default function Profile() {
+export default function ProfileCommon() {
   const [isloading, setIsloading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isEditing, setIsEditing] = useState(false);

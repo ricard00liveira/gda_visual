@@ -15,6 +15,7 @@ export interface ProfileResponse {
   conf_notEmail: boolean;
   conf_notPush: boolean;
   conf_notNewDenuncia: boolean;
+  user_created: string;
 }
 
 export interface RegisterPayload {
@@ -46,5 +47,11 @@ export async function getProfile(
 
 export async function registerUser(data: RegisterPayload) {
   const response = await api.post("/usuarios/create/", data);
+  console.log(data);
+  return response.data;
+}
+
+export async function updateLastLoginUser() {
+  const response = await api.patch(`/usuarios/last_login/`);
   return response.data;
 }

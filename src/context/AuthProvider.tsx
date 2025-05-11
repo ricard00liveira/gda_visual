@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, ReactNode } from "react";
+import { ReactNode, createContext, useEffect, useState } from "react";
 
 type UserType = {
   nome: string;
@@ -6,6 +6,7 @@ type UserType = {
   email: string;
   tipo: "comum" | "operador" | "adm";
   imagem_perfil_url?: string;
+  user_created?: string;
 };
 
 type UserPreferences = {
@@ -110,6 +111,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("email", user.email);
     localStorage.setItem("tipo", user.tipo);
     localStorage.setItem("imagem_perfil_url", user.imagem_perfil_url || "");
+    localStorage.setItem("lastLogin", new Date().toISOString());
+    localStorage.setItem("dateCreated", user.user_created || "");
 
     localStorage.setItem("conf_tema", conf_tema);
     localStorage.setItem("conf_not_email", JSON.stringify(conf_notEmail));

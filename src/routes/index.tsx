@@ -1,31 +1,32 @@
-import { createBrowserRouter } from "react-router-dom";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { CommonLayout } from "@/components/layout/CommonLayout";
+import { MainLayout } from "@/components/layout/MainLayout";
+import PublicLayout from "@/layouts/PublicLayout";
+import Addresses from "@/pages/Addresses";
+import Anonymous from "@/pages/Anonymous";
+import Dashboard from "@/pages/Dashboard";
+import FAQ from "@/pages/FAQ";
+import FactsSubfacts from "@/pages/FactsSubfacts";
+import ForgotPassword from "@/pages/ForgotPassword";
+import Geop from "@/pages/Geop";
 import Index from "@/pages/Index";
 import Login from "@/pages/Login";
+import Municipalities from "@/pages/Municipalities";
+import NewReport from "@/pages/NewReport";
+import Notifications from "@/pages/Notifications";
+import Profile from "@/pages/Profile";
 import Register from "@/pages/Register";
-import ForgotPassword from "@/pages/ForgotPassword";
 import RenewPassword from "@/pages/RenewPassword";
-import Anonymous from "@/pages/Anonymous";
-import SuccessAnonymous from "@/pages/SuccessAnonymous";
-import FAQ from "@/pages/FAQ";
-import Dashboard from "@/pages/Dashboard";
 import Reports from "@/pages/Reports";
 import ReportsAnalytics from "@/pages/ReportsAnalytics";
-import Users from "@/pages/Users";
-import Addresses from "@/pages/Addresses";
-import Geop from "@/pages/Geop";
-import Municipalities from "@/pages/Municipalities";
-import Profile from "@/pages/common/Profile";
-import Settings from "@/pages/common/Settings";
-import FactsSubfacts from "@/pages/FactsSubfacts";
-import Notifications from "@/pages/Notifications";
-import NewReport from "@/pages/NewReport";
+import SuccessAnonymous from "@/pages/SuccessAnonymous";
 import SuccessReport from "@/pages/SuccessReport";
-import PrivateRoute from "./PrivateRoute";
+import Users from "@/pages/Users";
 import MyReports from "@/pages/common/MyReports";
 import CommonNewReport from "@/pages/common/NewReport";
-import PublicLayout from "@/layouts/PublicLayout";
+import ProfileCommon from "@/pages/common/ProfileCommon";
+import Settings from "@/pages/common/Settings";
+import { createBrowserRouter } from "react-router-dom";
+import PrivateRoute from "./PrivateRoute";
 
 const ErrorPage = () => {
   return (
@@ -207,7 +208,7 @@ export const createRouter = () =>
           path: "perfil",
           element: (
             <CommonLayout>
-              <Profile />
+              <ProfileCommon />
             </CommonLayout>
           ),
         },

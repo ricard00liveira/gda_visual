@@ -1,4 +1,16 @@
-import { useEffect, useState } from "react";
+import { Asterisk } from "@/components/ui/asterisk";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import Loading from "@/components/ui/loading";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -7,33 +19,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Plus, Trash2, Eye, Ban, Pencil, Save } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "@/components/ui/use-toast";
+import { handleUserError } from "@/lib/error";
+import { unmaskCPF } from "@/lib/unmaskCPF";
 import {
-  getUsuarios,
-  deleteUsuario,
-  Usuario,
-  getUserDetail,
   UserDetail,
   UserDetailResponse,
-  updateUser,
+  Usuario,
   createUsuario,
+  deleteUsuario,
+  getUserDetail,
+  getUsuarios,
+  updateUser,
 } from "@/services/users";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { toast } from "@/components/ui/use-toast";
 import { Report } from "@/types/report";
 import { Label } from "@radix-ui/react-label";
-import { Switch } from "@/components/ui/switch";
-import Loading from "@/components/ui/loading";
+import { Ban, Eye, Pencil, Plus, Save, Trash2, User } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const tipoUsuarioLabel: Record<string, string> = {
   comum: "Usuário Comum",
@@ -76,8 +79,10 @@ const Users = () => {
     const fetchUsuarios = async () => {
       if (!isMounted) return;
       try {
+        setIsloading(true);
         const data = await getUsuarios();
         setUsuarios(data);
+        setIsloading(false);
       } catch (error) {
         toast({ title: "Erro ao carregar usuários", variant: "destructive" });
       }
@@ -126,6 +131,7 @@ const Users = () => {
         is_staff: detalhes.usuario.is_staff,
         self_registration: detalhes.usuario.self_registration,
         cpf: detalhes.usuario.cpf,
+        imagem_perfil: detalhes.usuario.imagem_perfil,
       } as any);
       setEditando(false);
     } catch (error) {
@@ -140,19 +146,25 @@ const Users = () => {
   const handleSalvarEdicao = async () => {
     if (modoNovo) {
       try {
+        setIsloading(true);
+        const cpfValido = unmaskCPF(editForm.cpf);
         await createUsuario({
           ...editForm,
+          cpf: cpfValido,
           tipo_usuario: editForm.tipo_usuario as "comum" | "operador" | "adm",
           conf_tema: editForm.conf_tema as "light" | "dark",
           password: "novo",
         });
         toast({ title: "Usuário criado com sucesso!", variant: "success" });
-        // Atualiza a lista
+
         const atualizados = await getUsuarios();
         setUsuarios(atualizados);
         setUsuarioDetalhes(null);
-      } catch {
-        toast({ title: "Erro ao criar usuário", variant: "destructive" });
+        await handleVisualizarUsuario(cpfValido);
+        setIsloading(false);
+      } catch (error) {
+        handleUserError(error);
+        setIsloading(false);
       }
       return;
     }
@@ -247,7 +259,6 @@ const Users = () => {
           Gerenciamento de Usuários
         </h1>
       </div>
-
       <div className="flex items-center justify-end gap-4">
         <Input
           type="text"
@@ -285,7 +296,10 @@ const Users = () => {
           <TableBody>
             {usuariosFiltrados.length > 0 ? (
               usuariosFiltrados.map((usuario) => (
-                <TableRow key={usuario.cpf}>
+                <TableRow
+                  key={usuario.cpf}
+                  onClick={() => handleVisualizarUsuario(usuario.cpf)}
+                >
                   <TableCell>{usuario.nome}</TableCell>
                   <TableCell>{formatCPF(usuario.cpf)}</TableCell>
                   <TableCell>{usuario.email}</TableCell>
@@ -338,24 +352,58 @@ const Users = () => {
                 <TabsTrigger value="dados">Dados Pessoais</TabsTrigger>
                 <TabsTrigger value="config">Configuração</TabsTrigger>
                 <TabsTrigger value="preferencias">Preferências</TabsTrigger>
+                <TabsTrigger value="imagem">Imagem</TabsTrigger>
                 {!editando && (
                   <TabsTrigger value="denuncias">Denúncias</TabsTrigger>
                 )}
               </TabsList>
 
               <TabsContent value="dados" className="space-y-2 pt-4">
+                {!modoNovo ? (
+                  <p>
+                    <strong>CPF:</strong> {formatCPF(usuarioSelecionado.cpf)}
+                  </p>
+                ) : (
+                  <div className="grid gap-2">
+                    <Label htmlFor="cpf">
+                      CPF:
+                      <Asterisk />
+                    </Label>
+                    <Input
+                      type="text"
+                      disabled={!editando || isloading}
+                      maxLength={14}
+                      value={editForm.cpf || ""}
+                      onChange={(e) => {
+                        const apenasNumeros = formatCPF(
+                          e.target.value.replace(/\D/g, "")
+                        );
+                        setEditForm({
+                          ...editForm,
+                          cpf: apenasNumeros,
+                        });
+                      }}
+                    />
+                  </div>
+                )}
                 <div className="grid gap-2">
-                  <Label>Nome</Label>
+                  <Label htmlFor="nome">
+                    Nome:
+                    <Asterisk />
+                  </Label>
                   <Input
-                    disabled={!editando}
+                    disabled={!editando || isloading}
                     value={editForm.nome}
                     onChange={(e) =>
                       setEditForm({ ...editForm, nome: e.target.value })
                     }
                   />
-                  <Label>Email</Label>
+                  <Label htmlFor="email">
+                    E-mail:
+                    <Asterisk />
+                  </Label>
                   <Input
-                    disabled={!editando}
+                    disabled={!editando || isloading}
                     value={editForm.email}
                     onChange={(e) =>
                       setEditForm({ ...editForm, email: e.target.value })
@@ -363,15 +411,18 @@ const Users = () => {
                   />
                   <Label>Telefone</Label>
                   <Input
-                    disabled={!editando}
+                    disabled={!editando || isloading}
                     value={editForm.telefone || ""}
                     onChange={(e) =>
                       setEditForm({ ...editForm, telefone: e.target.value })
                     }
                   />
-                  <Label>Tipo de Usuário</Label>
+                  <Label htmlFor="tipo_usuario">
+                    Tipo de usuário:
+                    <Asterisk />
+                  </Label>
                   <select
-                    disabled={!editando}
+                    disabled={!editando || isloading}
                     className="border rounded-md p-2"
                     value={editForm.tipo_usuario}
                     onChange={(e) =>
@@ -385,23 +436,6 @@ const Users = () => {
                     <option value="operador">Operador</option>
                     <option value="adm">Administrador</option>
                   </select>
-
-                  {!modoNovo ? (
-                    <p>
-                      <strong>CPF:</strong> {formatCPF(usuarioSelecionado.cpf)}
-                    </p>
-                  ) : (
-                    <div className="grid gap-2">
-                      <Label>CPF:</Label>
-                      <Input
-                        disabled={!editando}
-                        value={editForm.cpf || ""}
-                        onChange={(e) =>
-                          setEditForm({ ...editForm, cpf: e.target.value })
-                        }
-                      />
-                    </div>
-                  )}
                   {!modoNovo && (
                     <p>
                       <strong>Último Acesso:</strong>{" "}
@@ -419,7 +453,7 @@ const Users = () => {
                     </span>
                     <Switch
                       checked={editForm.is_superuser}
-                      disabled={!editando}
+                      disabled={!editando || isloading}
                       onCheckedChange={(val) =>
                         setEditForm({ ...editForm, is_superuser: val })
                       }
@@ -431,7 +465,7 @@ const Users = () => {
                     </span>
                     <Switch
                       checked={editForm.is_active}
-                      disabled={!editando}
+                      disabled={!editando || isloading}
                       onCheckedChange={(val) =>
                         setEditForm({ ...editForm, is_active: val })
                       }
@@ -443,7 +477,7 @@ const Users = () => {
                     </span>
                     <Switch
                       checked={editForm.is_staff}
-                      disabled={!editando}
+                      disabled={!editando || isloading}
                       onCheckedChange={(val) =>
                         setEditForm({ ...editForm, is_staff: val })
                       }
@@ -455,7 +489,7 @@ const Users = () => {
                     </span>
                     <Switch
                       checked={editForm.self_registration}
-                      disabled={!editando}
+                      disabled={!editando || isloading}
                       onCheckedChange={(val) =>
                         setEditForm({ ...editForm, self_registration: val })
                       }
@@ -468,7 +502,7 @@ const Users = () => {
                 <div className="space-y-2">
                   <Label>Tema:</Label>
                   <select
-                    disabled={!editando}
+                    disabled={!editando || isloading}
                     className="border rounded-md p-2"
                     value={editForm.conf_tema}
                     onChange={(e) =>
@@ -488,7 +522,7 @@ const Users = () => {
                     </span>
                     <Switch
                       checked={editForm.conf_not_email}
-                      disabled={!editando}
+                      disabled={!editando || isloading}
                       onCheckedChange={(val) =>
                         setEditForm({ ...editForm, conf_not_email: val })
                       }
@@ -500,7 +534,7 @@ const Users = () => {
                     </span>
                     <Switch
                       checked={editForm.conf_not_push}
-                      disabled={!editando}
+                      disabled={!editando || isloading}
                       onCheckedChange={(val) =>
                         setEditForm({ ...editForm, conf_not_push: val })
                       }
@@ -513,7 +547,7 @@ const Users = () => {
                       </span>
                       <Switch
                         checked={editForm.conf_not_newdenun}
-                        disabled={!editando}
+                        disabled={!editando || isloading}
                         onCheckedChange={(val) =>
                           setEditForm({ ...editForm, conf_not_newdenun: val })
                         }
@@ -522,7 +556,22 @@ const Users = () => {
                   )}
                 </div>
               </TabsContent>
-
+              <TabsContent value="imagem" className="space-y-2 pt-4">
+                <div className="space-y-2">
+                  <p>
+                    <strong>Imagem atual:</strong>{" "}
+                    {usuarioSelecionado?.imagem_perfil ? (
+                      <img
+                        src={usuarioSelecionado.imagem_perfil}
+                        alt="Imagem do Usuário"
+                        className="w-24 h-24 rounded-full object-cover  "
+                      />
+                    ) : (
+                      <User className="w-12 h-12 text-gray-400" />
+                    )}
+                  </p>
+                </div>
+              </TabsContent>
               <TabsContent value="denuncias" className="space-y-2 pt-4">
                 {usuarioDenuncias?.length ? (
                   usuarioDenuncias.map((d) => (

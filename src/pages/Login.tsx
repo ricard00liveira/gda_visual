@@ -1,14 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Leaf, LogOut, UserCheck, UserPlus } from "lucide-react";
-import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { getProfile, loginRequest } from "@/services/auth";
-import { useTheme } from "next-themes";
+import { useAuth } from "@/hooks/useAuth";
 import { formatCPF } from "@/lib/formatCPF";
 import { unmaskCPF } from "@/lib/unmaskCPF";
+import { getProfile, loginRequest, updateLastLoginUser } from "@/services/auth";
+import { ArrowLeft, Leaf, LogOut, UserCheck, UserPlus } from "lucide-react";
+import { useTheme } from "next-themes";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -59,6 +59,7 @@ const Login = () => {
         email: profile.email,
         tipo: tipo as "comum" | "operador" | "adm",
         imagem_perfil_url: profile.imagem_perfil_url,
+        user_created: profile.user_created,
       };
 
       const conf_tema = profile.conf_tema || "light";
@@ -79,7 +80,7 @@ const Login = () => {
       if (["light", "dark"].includes(conf_tema)) {
         setTheme(conf_tema as "light" | "dark");
       }
-
+      updateLastLoginUser();
       navigate(user.tipo === "comum" ? "/comum" : "/dashboard");
     } catch (err: any) {
       if (err.response?.status === 401) {
