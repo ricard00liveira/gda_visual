@@ -11,6 +11,12 @@ export interface Municipio {
   comarca: number;
 }
 
+export interface Logradouro {
+  id: number;
+  nome: string;
+  cidade: number;
+}
+
 // COMARCAS
 export const getComarcas = async () => {
   const response = await api.get("/comarcas/");
@@ -38,7 +44,7 @@ export const deleteComarca = async (id: number) => {
 };
 
 // MUNICÍPIOS
-export const getMunicipios = async () => {
+export const getMunicipios = async (): Promise<Municipio[]> => {
   const response = await api.get("/municipios/");
   return response.data;
 };
@@ -66,5 +72,61 @@ export const updateMunicipio = async (
 
 export const deleteMunicipio = async (id: number) => {
   const response = await api.delete(`/municipios/${id}/delete/`);
+  return response.data;
+};
+
+// LOGRADOUROS
+export const getLogradourosPorMunicipio = async (
+  municipioId: number,
+  q: string = "",
+  page: number = 1
+) => {
+  const params: any = { page };
+  if (q.length >= 3) params.q = q;
+
+  const response = await api.get(`/logradouros/${municipioId}/`, { params });
+  return response.data;
+};
+
+export const deleteLogradouro = async (id: number) => {
+  const response = await api.delete(`/logradouros/${id}/delete/`);
+  return response.data;
+};
+
+export const updateLogradouro = async (id: number, data: { nome: string }) => {
+  const response = await api.patch(`/logradouros/${id}/update/`, data);
+  return response.data;
+};
+
+export const createLogradouro = async (data: {
+  nome: string;
+  cidade: number;
+}) => {
+  const response = await api.post(`/logradouros/${data.cidade}/create/`, data);
+  return response.data;
+};
+
+// IMPORTAR LOGRADOUROS
+// Upload do arquivo para normalização
+export const uploadArquivoIBGE = async (arquivo: File) => {
+  const formData = new FormData();
+  formData.append("arquivo", arquivo);
+
+  const response = await api.post("/logradouros/normalizar-ibge/", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+  return response.data;
+};
+
+// Importar os dados para um município
+export const importarLogradouros = async (
+  municipioId: number,
+  arquivoPath: string
+) => {
+  const response = await api.post(`/logradouros/${municipioId}/importar/`, {
+    arquivo_path: arquivoPath,
+  });
+
   return response.data;
 };

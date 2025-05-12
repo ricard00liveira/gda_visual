@@ -299,11 +299,14 @@ const Users = () => {
                 <TableRow
                   key={usuario.cpf}
                   onClick={() => handleVisualizarUsuario(usuario.cpf)}
+                  className="py-1 text-sm"
                 >
-                  <TableCell>{usuario.nome}</TableCell>
-                  <TableCell>{formatCPF(usuario.cpf)}</TableCell>
-                  <TableCell>{usuario.email}</TableCell>
-                  <TableCell>
+                  <TableCell className="py-1">{usuario.nome}</TableCell>
+                  <TableCell className="py-1">
+                    {formatCPF(usuario.cpf)}
+                  </TableCell>
+                  <TableCell className="py-1">{usuario.email}</TableCell>
+                  <TableCell className="py-1">
                     {tipoUsuarioLabel[usuario.tipo_usuario] || "-"}
                   </TableCell>
                   <TableCell>
@@ -360,9 +363,17 @@ const Users = () => {
 
               <TabsContent value="dados" className="space-y-2 pt-4">
                 {!modoNovo ? (
-                  <p>
-                    <strong>CPF:</strong> {formatCPF(usuarioSelecionado.cpf)}
-                  </p>
+                  <div className="grid gap-2">
+                    <Label htmlFor="cpf">
+                      CPF:
+                      <Asterisk />
+                    </Label>
+                    <Input
+                      type="text"
+                      disabled
+                      value={formatCPF(usuarioSelecionado?.cpf) || ""}
+                    />
+                  </div>
                 ) : (
                   <div className="grid gap-2">
                     <Label htmlFor="cpf">
@@ -437,10 +448,20 @@ const Users = () => {
                     <option value="adm">Administrador</option>
                   </select>
                   {!modoNovo && (
-                    <p>
-                      <strong>Último Acesso:</strong>{" "}
-                      {new Date(usuarioSelecionado.last_login).toLocaleString()}
-                    </p>
+                    <>
+                      <p>
+                        Último Acesso:{" "}
+                        {new Date(
+                          usuarioSelecionado.last_login
+                        ).toLocaleString() + "."}
+                      </p>
+                      <p>
+                        Criado em:{" "}
+                        {new Date(
+                          usuarioSelecionado.date_created
+                        ).toLocaleString() + "."}
+                      </p>
+                    </>
                   )}
                 </div>
               </TabsContent>

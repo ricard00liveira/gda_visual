@@ -20,6 +20,7 @@ export interface UserDetail {
   conf_not_push: boolean;
   conf_not_newdenun: boolean;
   last_login: string | null;
+  date_created: string | null;
   is_superuser: boolean;
   is_active: boolean;
   is_staff: boolean;
