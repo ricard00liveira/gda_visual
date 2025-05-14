@@ -18,6 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "@/components/ui/use-toast";
+import api from "@/lib/axiosConfig";
 import {
   Logradouro,
   Municipio,
@@ -29,7 +30,8 @@ import {
   updateLogradouro,
   uploadArquivoIBGE,
 } from "@/services/locations";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { GoogleMap, Polyline } from "@react-google-maps/api";
+import { MapPin, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function Addresses() {
@@ -62,6 +64,25 @@ export default function Addresses() {
   const [municipioImportacaoId, setMunicipioImportacaoId] = useState<
     number | ""
   >("");
+  const [openMapaDialog, setOpenMapaDialog] = useState(false);
+  const [geojsonTrecho, setGeojsonTrecho] = useState<any>(null);
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({
+    lat: -30.0,
+    lng: -52.0,
+  });
+  const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
+
+  useEffect(() => {
+    if (mapInstance && geojsonTrecho?.geometry?.coordinates?.length > 0) {
+      const bounds = new google.maps.LatLngBounds();
+      geojsonTrecho.geometry.coordinates.forEach((segmento: any) => {
+        segmento.forEach(([lng, lat]: [number, number]) => {
+          bounds.extend(new google.maps.LatLng(lat, lng));
+        });
+      });
+      mapInstance.fitBounds(bounds);
+    }
+  }, [mapInstance, geojsonTrecho]);
 
   useEffect(() => {
     const fetchMunicipios = async () => {
@@ -277,6 +298,27 @@ export default function Addresses() {
       setIsLoading(false);
     }
   };
+  // VISUALIZAR MAPA
+  const handleVisualizarMapa = async (logradouroId: number) => {
+    try {
+      const response = await api.get(`/logcor/${logradouroId}/geojson/`);
+      setGeojsonTrecho(response.data);
+
+      // Tenta usar a primeira coordenada como centro do mapa
+      const coords = response.data.geometry.coordinates[0]?.[0];
+      if (coords) {
+        const [lng, lat] = coords;
+        setMapCenter({ lat, lng });
+      }
+
+      setOpenMapaDialog(true);
+    } catch (error) {
+      toast({
+        title: "Erro ao carregar geometria",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -331,7 +373,7 @@ export default function Addresses() {
             <TableRow>
               <TableHead>Código</TableHead>
               <TableHead>Nome</TableHead>
-              <TableHead>Ações</TableHead>
+              <TableHead className="text-center">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -348,8 +390,15 @@ export default function Addresses() {
                     <TableRow key={logradouro.id} className="py-1 text-sm">
                       <TableCell className="py-1">{logradouro.id}</TableCell>
                       <TableCell className="py-1">{logradouro.nome}</TableCell>
-                      <TableCell className="py-1">
+                      <TableCell className="py-1 justify-center">
                         <div className="flex justify-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleVisualizarMapa(logradouro.id)}
+                          >
+                            <MapPin className="h-4 w-4" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -379,6 +428,63 @@ export default function Addresses() {
             )}
           </TableBody>
         </Table>
+        <>
+          <Dialog open={openMapaDialog} onOpenChange={setOpenMapaDialog}>
+            <DialogContent className="max-w-4xl">
+              <DialogHeader>
+                <DialogTitle>Trecho Geográfico</DialogTitle>
+                <DialogDescription>
+                  Visualização no Google Maps com dados do GeoDjango
+                </DialogDescription>
+              </DialogHeader>
+
+              <div style={{ height: "500px", width: "100%" }}>
+                {geojsonTrecho?.geometry ? (
+                  (() => {
+                    const polylines: JSX.Element[] = [];
+
+                    geojsonTrecho.geometry.coordinates.forEach(
+                      (segmento: any, idx: number) => {
+                        const path = segmento.map(
+                          ([lng, lat]: [number, number]) => ({ lat, lng })
+                        );
+
+                        polylines.push(
+                          <Polyline
+                            key={`poly-${idx}-${Date.now()}`}
+                            path={path}
+                            options={{
+                              strokeColor: "#FF0000",
+                              strokeOpacity: 0.35,
+                              strokeWeight: 7.5,
+                            }}
+                          />
+                        );
+                      }
+                    );
+
+                    return (
+                      <GoogleMap
+                        mapContainerStyle={{ height: "100%", width: "100%" }}
+                        center={mapCenter}
+                        zoom={14}
+                        onLoad={(map) => {
+                          setMapInstance(map);
+                        }}
+                      >
+                        {polylines}
+                      </GoogleMap>
+                    );
+                  })()
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Carregando geometria...
+                  </p>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        </>
         <>
           <Dialog open={openImportDialog} onOpenChange={setOpenImportDialog}>
             <DialogContent>

@@ -1,37 +1,140 @@
+import { Asterisk } from "@/components/ui/asterisk";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Shield, Upload, ArrowLeft, Leaf, HelpCircle } from "lucide-react";
-import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  getLogradourosPorMunicipio,
+  getMunicipios,
+} from "@/services/locations";
+import { ArrowLeft, HelpCircle, Leaf, Shield, Upload } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { LocationFields } from "@/components/anonymous/LocationFields";
 
-const Anonymous = () => {
+interface Municipio {
+  id: number;
+  nome: string;
+}
+
+interface Logradouro {
+  id: number;
+  nome: string;
+}
+
+const Anonymous = ({
+  onValidChange,
+}: {
+  onValidChange?: (valid: boolean) => void;
+}) => {
   const { toast } = useToast();
+  const [formData, setFormData] = useState({
+    municipioId: null,
+    logradouroId: null,
+    numero: "",
+    complemento: "",
+    bairro: "",
+    referencia: "",
+    historico: "",
+    files: [],
+  });
   const [files, setFiles] = useState<File[]>([]);
+  const [municipios, setMunicipios] = useState<Municipio[]>([]);
+  const [municipioId, setMunicipioId] = useState<number | null>(null);
+  const [logradouroId, setLogradouroId] = useState<number | null>(null);
+  const [logradouros, setLogradouros] = useState<Logradouro[]>([]);
+  const [logradouroBusca, setLogradouroBusca] = useState("");
+  const [numero, setNumero] = useState<string>("");
+  const [semNumero, setSemNumero] = useState(false);
+  const [semComplemento, setSemComplemento] = useState(false);
+  const [complemento, setComplemento] = useState("");
+  const [bairro, setBairro] = useState("");
+  const [referencia, setReferencia] = useState("");
+  const [historico, setHistorico] = useState("");
+  const [mostrarSugestoesLogradouros, setMostrarSugestoesLogradouros] =
+    useState(false);
+  const [validaLocalizacao, setValidaLocalizacao] = useState(false);
+  const [validaHistorico, setValidaHistorico] = useState(false);
+  const [validaTudo, setValidaTudo] = useState(false);
+
+  useEffect(() => {
+    const fetchMunicipios = async () => {
+      const data = await getMunicipios();
+      setMunicipios(data);
+    };
+    fetchMunicipios();
+  }, []);
+
+  useEffect(() => {
+    if (municipioId && logradouroId) {
+      setValidaLocalizacao(true);
+    } else {
+      setValidaLocalizacao(false);
+    }
+  }, [municipioId, logradouroId]);
+
+  useEffect(() => {
+    if (historico.length >= 50 && historico.length <= 2000) {
+      setValidaHistorico(true);
+    } else {
+      setValidaHistorico(false);
+    }
+  }, [historico]);
+
+  useEffect(() => {
+    const fetchLogradouros = async () => {
+      if (municipioId && logradouroBusca.length >= 3) {
+        const result = await getLogradourosPorMunicipio(
+          municipioId,
+          logradouroBusca
+        );
+        const lista = result.results || [];
+        setLogradouros(lista);
+
+        // Verifica se o texto digitado é igual ao nome de algum logradouro
+        const correspondente = lista.find(
+          (l: any) =>
+            l.nome.toLowerCase().trim() === logradouroBusca.toLowerCase().trim()
+        );
+
+        if (!correspondente) {
+          setLogradouroId(null);
+        } else {
+          setLogradouroId(correspondente.id);
+        }
+      } else {
+        setLogradouros([]);
+        setMostrarSugestoesLogradouros(false);
+        setLogradouroId(null);
+      }
+    };
+
+    fetchLogradouros();
+  }, [logradouroBusca, municipioId]);
+
+  useEffect(() => {
+    if (onValidChange) {
+      const isValid = municipioId !== null && logradouroId !== null;
+      onValidChange(isValid);
+    }
+  }, [municipioId, logradouroId, onValidChange]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
-    
+
     if (selectedFiles.length + files.length > 4) {
       toast({
-        variant: "destructive",
+        variant: "warning",
         title: "Limite excedido",
         description: "Você pode enviar no máximo 4 arquivos.",
       });
       return;
     }
 
-    const invalidFiles = selectedFiles.filter(file => {
-      const isValidType = ['image/jpeg', 'image/png', 'video/mp4'].includes(file.type);
+    const invalidFiles = selectedFiles.filter((file) => {
+      const isValidType = ["image/jpeg", "image/png", "video/mp4"].includes(
+        file.type
+      );
       const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB
       return !isValidType || !isValidSize;
     });
@@ -45,19 +148,55 @@ const Anonymous = () => {
       return;
     }
 
-    setFiles(prev => [...prev, ...selectedFiles]);
+    setFiles((prev) => [...prev, ...selectedFiles]);
   };
 
   const removeFile = (index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const data = new FormData();
+    data.append("municipioId", String(municipioId));
+    data.append("logradouroId", String(logradouroId));
+    if (semNumero) {
+      data.append("numero", null);
+    } else {
+      data.append("numero", numero);
+    }
+    if (semComplemento) {
+      data.append("complemento", null);
+    } else {
+      data.append("complemento", complemento);
+    }
+    if (bairro.length > 0) {
+      data.append("bairro", bairro);
+    } else {
+      data.append("bairro", null);
+    }
+    if (referencia.length > 0) {
+      data.append("referencia", referencia);
+    }
+    data.append("historico", historico);
+
+    files.forEach((file, index) => {
+      data.append("files", file); // ou `data.append(`files[${index}]`, file);` dependendo do backend
+    });
+
+    console.log("Enviando dados:");
+    for (let pair of data.entries()) {
+      console.log(pair[0] + ": ", pair[1]);
+    }
+
     toast({
       title: "Denúncia enviada",
+      variant: "success",
       description: "Sua denúncia foi registrada com sucesso.",
     });
+
+    // Aqui você pode fazer a requisição, ex:
+    // await api.post("/denuncias/", data, { headers: { "Content-Type": "multipart/form-data" } });
   };
 
   return (
@@ -71,13 +210,19 @@ const Anonymous = () => {
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
             <Link to="/faq" className="w-full sm:w-auto">
-              <Button variant="outline" className="gap-2 text-emerald-700 w-full hover:bg-emerald-50 border-emerald-200">
+              <Button
+                variant="outline"
+                className="gap-2 text-emerald-700 w-full hover:bg-emerald-50 border-emerald-200"
+              >
                 <HelpCircle className="w-4 h-4" />
                 Ajuda
               </Button>
             </Link>
             <Link to="/" className="w-full sm:w-auto">
-              <Button variant="outline" className="gap-2 text-emerald-700 w-full hover:bg-emerald-50 border-emerald-200">
+              <Button
+                variant="outline"
+                className="gap-2 text-emerald-700 w-full hover:bg-emerald-50 border-emerald-200"
+              >
                 <ArrowLeft className="w-4 h-4" />
                 Voltar
               </Button>
@@ -91,100 +236,305 @@ const Anonymous = () => {
             Denúncia Anônima
           </h1>
         </div>
-
+        {/* Localização */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Localização */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 md:p-6 space-y-4 shadow-lg border border-emerald-100 hover:shadow-xl hover:border-emerald-200 transition-all duration-500">
+          <div className="relative z-50 bg-white/80 backdrop-blur-sm rounded-lg p-4 md:p-6 space-y-4 shadow-lg border border-emerald-100 hover:shadow-xl hover:border-emerald-200 transition-all duration-500">
             <h2 className="text-xl font-semibold text-emerald-700 mb-4">
-              Localização da Ocorrência
+              Localização
             </h2>
-            <LocationFields />
-          </div>
 
-          {/* Informações do Fato */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 md:p-6 space-y-4 shadow-lg border border-emerald-100 hover:shadow-xl hover:border-emerald-200 transition-all duration-500">
-            <h2 className="text-xl font-semibold text-emerald-700 mb-4">
-              Informações do Fato
-            </h2>
-            <Select>
-              <SelectTrigger className="bg-white border-emerald-200 text-gray-700 hover:border-emerald-400 transition-colors">
-                <SelectValue placeholder="Tipo do fato" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="desmatamento">Desmatamento</SelectItem>
-                <SelectItem value="poluicao">Poluição</SelectItem>
-                <SelectItem value="queimada">Queimada</SelectItem>
-                <SelectItem value="cacailegal">Caça Ilegal</SelectItem>
-                <SelectItem value="outros">Outros</SelectItem>
-              </SelectContent>
-            </Select>
-            <Textarea
-              placeholder="Descreva o fato ocorrido..."
-              className="bg-white border-emerald-200 text-gray-700 placeholder:text-gray-400 min-h-[150px] hover:border-emerald-400 transition-colors"
-            />
-          </div>
-
-          {/* Upload de Arquivos */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 md:p-6 space-y-4 shadow-lg border border-emerald-100 hover:shadow-xl hover:border-emerald-200 transition-all duration-500">
-            <h2 className="text-xl font-semibold text-emerald-700 mb-4">
-              Evidências
-            </h2>
             <div className="space-y-4">
-              <div className="flex items-center justify-center w-full">
-                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-emerald-200 border-dashed rounded-lg cursor-pointer bg-emerald-50/50 hover:bg-emerald-50 hover:border-emerald-400 transition-all duration-300">
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <Upload className="w-8 h-8 mb-2 text-emerald-600" />
-                    <p className="text-sm text-gray-600">
-                      Clique para upload ou arraste arquivos aqui
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      JPG, PNG ou MP4 (máx. 5MB cada)
-                    </p>
-                  </div>
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept=".jpg,.jpeg,.png,.mp4"
-                    onChange={handleFileChange}
-                    multiple
-                  />
+              <div>
+                <label className="block font-medium">
+                  Município:
+                  <Asterisk />
                 </label>
-              </div>
-              {files.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {files.map((file, index) => (
-                    <div
-                      key={index}
-                      className="relative bg-white p-3 rounded-lg group hover:bg-emerald-50 transition-all duration-300 border border-emerald-200"
-                    >
-                      <button
-                        onClick={() => removeFile(index)}
-                        className="absolute top-1 right-1 bg-red-500/80 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        ×
-                      </button>
-                      <p className="text-sm text-gray-600 truncate">{file.name}</p>
-                    </div>
+                <select
+                  className="w-full border rounded px-2 py-1 bg-white border-emerald-200 text-gray-700 placeholder:text-gray-400 hover:border-emerald-400 transition-colors"
+                  value={municipioId ?? ""}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setMunicipioId(val ? Number(val) : null);
+                    setLogradouros([]);
+                    setLogradouroId(null);
+                    setLogradouroBusca("");
+                  }}
+                >
+                  <option value="">Selecione uma cidade</option>
+                  {municipios.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.nome}
+                    </option>
                   ))}
+                </select>
+              </div>
+
+              {municipioId && (
+                <div className="relative z-60">
+                  <label className="block font-medium mb-1">
+                    Logradouro:
+                    <Asterisk />
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full border rounded px-2 py-1 bg-white border-emerald-200 text-gray-700 placeholder:text-gray-400 hover:border-emerald-400 transition-colors"
+                    placeholder="Digite parte do nome da Rua/Avenida/Travessa (mín. 3 letras)"
+                    value={logradouroBusca}
+                    onChange={(e) => {
+                      setLogradouroBusca(e.target.value);
+                      setMostrarSugestoesLogradouros(true);
+                    }}
+                    onFocus={() => setMostrarSugestoesLogradouros(true)}
+                    onBlur={() =>
+                      setTimeout(
+                        () => setMostrarSugestoesLogradouros(false),
+                        200
+                      )
+                    }
+                  />
+                  {mostrarSugestoesLogradouros && logradouros.length > 0 && (
+                    <ul className="absolute z-70 w-full bg-white border border-emerald-200 rounded shadow mt-1 max-h-60 overflow-y-auto">
+                      {logradouros.map((l) => (
+                        <li
+                          key={l.id}
+                          onMouseDown={() => {
+                            setLogradouroId(l.id);
+                            setLogradouroBusca(l.nome);
+                            setMostrarSugestoesLogradouros(false);
+                          }}
+                          className="z-50 px-2 py-1 hover:bg-emerald-100 cursor-pointer text-sm"
+                        >
+                          {l.nome}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+
+              {logradouroId && (
+                <div className="relative z-0 space-y-2">
+                  <div className="z-0 grid grid-cols-[auto_1fr_auto_auto] items-center gap-2">
+                    <label className="block font-medium">Número:</label>
+                    <Input
+                      placeholder="Número da residência, prédio, ou numeral mais próximo do local"
+                      className="bg-white border-emerald-200 text-gray-700 placeholder:text-gray-400 hover:border-emerald-400 transition-colors"
+                      value={numero}
+                      onChange={(e) => setNumero(e.target.value)}
+                      disabled={semNumero}
+                    />
+                    <Checkbox
+                      checked={semNumero}
+                      onCheckedChange={(v) => {
+                        const checked = v === true;
+                        setSemNumero(checked);
+                        if (checked) setNumero("");
+                      }}
+                    />
+                    <span className="text-sm">Sem Número</span>
+                  </div>
+                  <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-2">
+                    <label className="block font-medium">Complemento:</label>
+                    <Input
+                      placeholder="APT, Bloco, Andar, Casa 01 A, etc."
+                      className="bg-white border-emerald-200 text-gray-700 placeholder:text-gray-400 hover:border-emerald-400 transition-colors"
+                      value={complemento}
+                      onChange={(e) => setComplemento(e.target.value)}
+                      disabled={semComplemento}
+                    />
+                    <Checkbox
+                      checked={semComplemento}
+                      onCheckedChange={(v) => {
+                        const checked = v === true;
+                        setSemComplemento(checked);
+                        if (checked) setComplemento("");
+                      }}
+                    />
+                    <span className="text-sm">Sem Complemento</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="block font-medium">Bairro:</label>
+                    <Input
+                      placeholder="Digite o bairro ou localidade"
+                      value={bairro}
+                      className="bg-white border-emerald-200 text-gray-700 placeholder:text-gray-400 hover:border-emerald-400 transition-colors"
+                      onChange={(e) => setBairro(e.target.value)}
+                      onClick={() => {
+                        numero ? setSemNumero(false) : setSemNumero(true);
+                        complemento
+                          ? setSemComplemento(false)
+                          : setSemComplemento(true);
+                      }}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="block font-medium">Observações</label>
+                    <Input
+                      placeholder="Mais informações sobre o local ou ponto de referência."
+                      value={referencia}
+                      className="bg-white border-emerald-200 text-gray-700 placeholder:text-gray-400 hover:border-emerald-400 transition-colors"
+                      onChange={(e) => setReferencia(e.target.value)}
+                    />
+                  </div>
                 </div>
               )}
             </div>
           </div>
+          {/* Informações do Fato */}
+          <div className="relative z-0 bg-white/80 backdrop-blur-sm rounded-lg p-4 md:p-6 space-y-4 shadow-lg border border-emerald-100 hover:shadow-xl hover:border-emerald-200 transition-all duration-500">
+            <h2 className="text-xl font-semibold text-emerald-700 mb-4">
+              Informações do Fato
+              <Asterisk />
+            </h2>
+            {validaLocalizacao ? (
+              <>
+                <Textarea
+                  maxLength={2000}
+                  placeholder="Nos conte o que aconteceu da forma mais completa que puder. Toda informação pode ajudar!"
+                  className="bg-white border-emerald-200 text-gray-700 placeholder:text-gray-400 min-h-[150px] hover:border-emerald-400 transition-colors"
+                  onClick={() => {
+                    numero ? setSemNumero(false) : setSemNumero(true);
+                    complemento
+                      ? setSemComplemento(false)
+                      : setSemComplemento(true);
+                  }}
+                  onChange={(e) => {
+                    setHistorico(e.target.value);
+                  }}
+                  value={historico}
+                  disabled={!validaLocalizacao}
+                />
+                <div className="flex justify-between text-sm">
+                  <div
+                    className={`text-left ${
+                      historico.length < 50
+                        ? "text-red-500 font-semibold"
+                        : "invisible"
+                    }`}
+                  >
+                    Mínimo de caracteres: {historico.length}/50
+                  </div>
+                  <div
+                    className={`${
+                      historico.length > 1800
+                        ? "text-red-500 font-semibold"
+                        : "text-gray-500"
+                    }`}
+                  >
+                    {historico.length} / 2000 caracteres
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center justify-center w-full">
+                  <p className="text-sm text-gray-400">
+                    Preencha o campo anterior.
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+          {/* Upload de Arquivos */}
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 md:p-6 space-y-4 shadow-lg border border-emerald-100 hover:shadow-xl hover:border-emerald-200 transition-all duration-500">
+            <h2 className="text-xl font-semibold text-emerald-700 mb-4">
+              Evidências (Opcional)
+            </h2>
+            {validaHistorico && validaLocalizacao ? (
+              <>
+                <div className="flex items-center justify-center w-full">
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-emerald-200 border-dashed rounded-lg cursor-pointer bg-emerald-50/50 hover:bg-emerald-50 hover:border-emerald-400 transition-all duration-300">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <Upload className="w-8 h-8 mb-2 text-emerald-600" />
+                      <p className="text-sm text-gray-600">
+                        Clique para upload ou arraste arquivos aqui
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        JPG, PNG ou MP4 (máx. 5MB cada)
+                      </p>
+                    </div>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept=".jpg,.jpeg,.png,.mp4"
+                      onChange={handleFileChange}
+                      multiple
+                    />
+                  </label>
+                </div>
 
+                {files.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {files.map((file, index) => {
+                      const isImage = file.type.startsWith("image/");
+                      const previewURL = isImage
+                        ? URL.createObjectURL(file)
+                        : null;
+
+                      return (
+                        <div
+                          key={index}
+                          className="relative bg-white p-2 rounded-lg border border-emerald-200 shadow-sm group"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => removeFile(index)}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Remover"
+                          >
+                            ×
+                          </button>
+
+                          {isImage ? (
+                            <img
+                              src={previewURL!}
+                              alt={`Preview ${file.name}`}
+                              className="w-full h-24 object-cover rounded"
+                              onLoad={() => URL.revokeObjectURL(previewURL!)}
+                            />
+                          ) : (
+                            <div className="h-24 flex items-center justify-center text-sm text-gray-500">
+                              {file.name}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="flex items-center justify-center w-full">
+                <p className="text-sm text-gray-400">
+                  Preencha o campo anterior.
+                </p>
+              </div>
+            )}
+          </div>
           {/* Dados do Infrator */}
           <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 md:p-6 space-y-4 shadow-lg border border-emerald-100 hover:shadow-xl hover:border-emerald-200 transition-all duration-500">
             <h2 className="text-xl font-semibold text-emerald-700 mb-4">
               Dados do Infrator (Opcional)
             </h2>
-            <Input
-              placeholder="Nome ou apelido do infrator"
-              className="bg-white border-emerald-200 text-gray-700 placeholder:text-gray-400 hover:border-emerald-400 transition-colors"
-            />
+            {validaHistorico && validaLocalizacao ? (
+              <Input
+                placeholder="Nome ou apelido do infrator"
+                className="bg-white border-emerald-200 text-gray-700 placeholder:text-gray-400 hover:border-emerald-400 transition-colors"
+              />
+            ) : (
+              <div className="flex items-center justify-center w-full">
+                <p className="text-sm text-gray-400">
+                  Preencha o campo anterior.
+                </p>
+              </div>
+            )}
           </div>
 
+          {/* Botão de Enviar Denúncia */}
           <Button
             type="submit"
             className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white py-6 text-lg font-semibold transition-all duration-300 shadow-xl hover:shadow-emerald-500/20 transform hover:-translate-y-0.5"
+            disabled={!validaLocalizacao || !validaHistorico}
           >
             Enviar Denúncia
           </Button>

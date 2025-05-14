@@ -1,5 +1,12 @@
 import { Button } from "@/components/ui/button";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -7,35 +14,28 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 
 const Geop = () => {
   // Temporary mock data - replace with actual data fetching
   const coordinates = [
-    { 
-      id: 1, 
-      name: "Avenida Paulista", 
+    {
+      id: 1,
+      name: "Avenida Paulista",
       startLatitude: "-23.561340",
       startLongitude: "-46.656141",
       endLatitude: "-23.571058",
       endLongitude: "-46.642151",
-      city: "São Paulo" 
+      city: "São Paulo",
     },
-    { 
-      id: 2, 
-      name: "Rua Augusta", 
+    {
+      id: 2,
+      name: "Rua Augusta",
       startLatitude: "-23.554321",
       startLongitude: "-46.651234",
       endLatitude: "-23.558765",
       endLongitude: "-46.657890",
-      city: "São Paulo" 
+      city: "São Paulo",
     },
   ];
 
