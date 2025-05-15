@@ -18,23 +18,27 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "@/components/ui/use-toast";
-import api from "@/lib/axiosConfig";
 import {
   Logradouro,
   Municipio,
   createLogradouro,
   deleteLogradouro,
+  getLogradouroGeojson,
   getLogradourosPorMunicipio,
   getMunicipios,
   importarLogradouros,
   updateLogradouro,
   uploadArquivoIBGE,
 } from "@/services/locations";
-import { GoogleMap, Polyline } from "@react-google-maps/api";
+import { GoogleMap, Polyline, useJsApiLoader } from "@react-google-maps/api";
 import { MapPin, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function Addresses() {
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: "AIzaSyCgunavWw1zPPLGG5CWOHFIf4N9NbLqrE0",
+  }); //todo: move to env
+
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [municipios, setMunicipios] = useState<Municipio[]>([]);
   const [logradouros, setLogradouros] = useState<Logradouro[]>([]);
@@ -301,11 +305,12 @@ export default function Addresses() {
   // VISUALIZAR MAPA
   const handleVisualizarMapa = async (logradouroId: number) => {
     try {
-      const response = await api.get(`/logcor/${logradouroId}/geojson/`);
-      setGeojsonTrecho(response.data);
+      const response = await getLogradouroGeojson(logradouroId);
+      //console.log(response);
+      setGeojsonTrecho(response);
 
       // Tenta usar a primeira coordenada como centro do mapa
-      const coords = response.data.geometry.coordinates[0]?.[0];
+      const coords = response.geometry.coordinates[0]?.[0];
       if (coords) {
         const [lng, lat] = coords;
         setMapCenter({ lat, lng });
@@ -313,6 +318,7 @@ export default function Addresses() {
 
       setOpenMapaDialog(true);
     } catch (error) {
+      //console.error(error);
       toast({
         title: "Erro ao carregar geometria",
         variant: "destructive",
@@ -437,51 +443,59 @@ export default function Addresses() {
                   Visualização no Google Maps com dados do GeoDjango
                 </DialogDescription>
               </DialogHeader>
+              {!isLoaded ? (
+                <p className="text-center text-gray-500">Carregando mapa...</p>
+              ) : (
+                <>
+                  <div style={{ height: "500px", width: "100%" }}>
+                    {geojsonTrecho?.geometry ? (
+                      (() => {
+                        const polylines: JSX.Element[] = [];
 
-              <div style={{ height: "500px", width: "100%" }}>
-                {geojsonTrecho?.geometry ? (
-                  (() => {
-                    const polylines: JSX.Element[] = [];
+                        geojsonTrecho.geometry.coordinates.forEach(
+                          (segmento: any, idx: number) => {
+                            const path = segmento.map(
+                              ([lng, lat]: [number, number]) => ({ lat, lng })
+                            );
 
-                    geojsonTrecho.geometry.coordinates.forEach(
-                      (segmento: any, idx: number) => {
-                        const path = segmento.map(
-                          ([lng, lat]: [number, number]) => ({ lat, lng })
+                            polylines.push(
+                              <Polyline
+                                key={`poly-${idx}-${Date.now()}`}
+                                path={path}
+                                options={{
+                                  strokeColor: "#FF0000",
+                                  strokeOpacity: 0.35,
+                                  strokeWeight: 7.5,
+                                }}
+                              />
+                            );
+                          }
                         );
 
-                        polylines.push(
-                          <Polyline
-                            key={`poly-${idx}-${Date.now()}`}
-                            path={path}
-                            options={{
-                              strokeColor: "#FF0000",
-                              strokeOpacity: 0.35,
-                              strokeWeight: 7.5,
+                        return (
+                          <GoogleMap
+                            mapContainerStyle={{
+                              height: "100%",
+                              width: "100%",
                             }}
-                          />
+                            center={mapCenter}
+                            zoom={14}
+                            onLoad={(map) => {
+                              setMapInstance(map);
+                            }}
+                          >
+                            {polylines}
+                          </GoogleMap>
                         );
-                      }
-                    );
-
-                    return (
-                      <GoogleMap
-                        mapContainerStyle={{ height: "100%", width: "100%" }}
-                        center={mapCenter}
-                        zoom={14}
-                        onLoad={(map) => {
-                          setMapInstance(map);
-                        }}
-                      >
-                        {polylines}
-                      </GoogleMap>
-                    );
-                  })()
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    Carregando geometria...
-                  </p>
-                )}
-              </div>
+                      })()
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Carregando geometria...
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
             </DialogContent>
           </Dialog>
         </>

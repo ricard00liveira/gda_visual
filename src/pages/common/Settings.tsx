@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -9,12 +8,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Bell, Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { updateUserPreferences } from "@/services/users";
+import { Bell, Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 export default function Settings() {
   const [mounted, setMounted] = useState(false);
@@ -160,6 +160,22 @@ export default function Settings() {
                 </div>
               </div>
               <Switch checked={conf_not_push} onCheckedChange={setNotPush} />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Bell className="h-5 w-5" />
+                <div>
+                  <Label>Notificações de novas denúncias</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Seja notificado quando uma nova denúncia for registrada
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={conf_not_newdenun}
+                onCheckedChange={setNotNewDenun}
+              />
             </div>
           </CardContent>
         </Card>

@@ -106,8 +106,13 @@ export const createLogradouro = async (data: {
   return response.data;
 };
 
+export const getLogradouroById = async (id: number) => {
+  const response = await api.get(`/logradouros/${id}/read/`);
+  return response.data;
+};
+
 // IMPORTAR LOGRADOUROS
-// Upload do arquivo para normalização
+// Upload do arquivo para formatação
 export const uploadArquivoIBGE = async (arquivo: File) => {
   const formData = new FormData();
   formData.append("arquivo", arquivo);
@@ -130,3 +135,9 @@ export const importarLogradouros = async (
 
   return response.data;
 };
+
+// Obter GeoJSON de um logradouro
+export async function getLogradouroGeojson(logradouroId: number) {
+  const response = await api.get(`/logcor/${logradouroId}/geojson/`);
+  return response.data;
+}
