@@ -8,9 +8,12 @@ import {
   getLogradourosPorMunicipio,
   getMunicipios,
 } from "@/services/locations";
+import { enviarDenunciaAnonima } from "@/services/reportAnonymous";
+import { uploadAnexos } from "@/services/uploadFiles";
+import { AnonymousReportForm } from "@/types/reportAnonymous";
 import { ArrowLeft, HelpCircle, Leaf, Shield, Upload } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 interface Municipio {
   id: number;
@@ -27,17 +30,9 @@ const Anonymous = ({
 }: {
   onValidChange?: (valid: boolean) => void;
 }) => {
+  const navigate = useNavigate();
+  const [isloading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const [formData, setFormData] = useState({
-    municipioId: null,
-    logradouroId: null,
-    numero: "",
-    complemento: "",
-    bairro: "",
-    referencia: "",
-    historico: "",
-    files: [],
-  });
   const [files, setFiles] = useState<File[]>([]);
   const [municipios, setMunicipios] = useState<Municipio[]>([]);
   const [municipioId, setMunicipioId] = useState<number | null>(null);
@@ -55,7 +50,8 @@ const Anonymous = ({
     useState(false);
   const [validaLocalizacao, setValidaLocalizacao] = useState(false);
   const [validaHistorico, setValidaHistorico] = useState(false);
-  const [validaTudo, setValidaTudo] = useState(false);
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchMunicipios = async () => {
@@ -91,7 +87,6 @@ const Anonymous = ({
         const lista = result.results || [];
         setLogradouros(lista);
 
-        // Verifica se o texto digitado é igual ao nome de algum logradouro
         const correspondente = lista.find(
           (l: any) =>
             l.nome.toLowerCase().trim() === logradouroBusca.toLowerCase().trim()
@@ -141,7 +136,7 @@ const Anonymous = ({
 
     if (invalidFiles.length > 0) {
       toast({
-        variant: "destructive",
+        variant: "warning",
         title: "Arquivo(s) inválido(s)",
         description: "Apenas arquivos JPG, PNG ou MP4 até 5MB são permitidos.",
       });
@@ -154,49 +149,87 @@ const Anonymous = ({
   const removeFile = (index: number) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const resetDenuncia = () => {
+    setMunicipioId(null);
+    setLogradouroId(null);
+    setLogradouroBusca("");
+    setNumero("");
+    setSemNumero(false);
+    setSemComplemento(false);
+    setComplemento("");
+    setBairro("");
+    setReferencia("");
+    setHistorico("");
+    setFiles([]);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const data = new FormData();
-    data.append("municipioId", String(municipioId));
-    data.append("logradouroId", String(logradouroId));
-    if (semNumero) {
-      data.append("numero", null);
-    } else {
-      data.append("numero", numero);
-    }
-    if (semComplemento) {
-      data.append("complemento", null);
-    } else {
-      data.append("complemento", complemento);
-    }
-    if (bairro.length > 0) {
-      data.append("bairro", bairro);
-    } else {
-      data.append("bairro", null);
-    }
-    if (referencia.length > 0) {
-      data.append("referencia", referencia);
-    }
-    data.append("historico", historico);
-
-    files.forEach((file, index) => {
-      data.append("files", file); // ou `data.append(`files[${index}]`, file);` dependendo do backend
-    });
-
-    console.log("Enviando dados:");
-    for (let pair of data.entries()) {
-      console.log(pair[0] + ": ", pair[1]);
+    if (historico.trim().length < 50) {
+      toast({
+        title: "Descrição muito curta",
+        variant: "warning",
+        description: "A descrição deve ter pelo menos 50 caracteres.",
+      });
+      return;
     }
 
-    toast({
-      title: "Denúncia enviada",
-      variant: "success",
-      description: "Sua denúncia foi registrada com sucesso.",
-    });
+    const payload: AnonymousReportForm = {
+      descricao: historico,
+      municipio: municipioId,
+      endereco: logradouroId,
+    };
 
-    // Aqui você pode fazer a requisição, ex:
-    // await api.post("/denuncias/", data, { headers: { "Content-Type": "multipart/form-data" } });
+    if (!semNumero && numero.trim() !== "") {
+      payload.nr_endereco = numero;
+    }
+
+    if (!semComplemento && complemento.trim() !== "") {
+      payload.ponto_referencia = complemento;
+    }
+
+    if (bairro.trim() !== "") {
+      payload.bairro = bairro;
+    }
+
+    if (referencia.trim() !== "") {
+      payload.ponto_referencia = referencia;
+    }
+
+    if (latitude && longitude) {
+      payload.latitude = latitude;
+      payload.longitude = longitude;
+    }
+
+    try {
+      const response = await enviarDenunciaAnonima(payload);
+      const numeroDenuncia = response.denuncia.numero;
+      if (response.denuncia && numeroDenuncia && files.length > 0) {
+        try {
+          await uploadAnexos(numeroDenuncia, files);
+        } catch (error: any) {
+          toast({
+            title: "Erro ao enviar anexos",
+            variant: "warning",
+            description:
+              error?.error ||
+              "Não foi possível enviar os anexos. Tente novamente.",
+          });
+        }
+      }
+      resetDenuncia();
+      navigate("/anonymous/success");
+    } catch (error: any) {
+      console.error("Erro ao enviar denúncia:", error);
+      toast({
+        title: "Erro ao enviar denúncia",
+        variant: "destructive",
+        description:
+          error?.response?.data?.error || "Não foi possível enviar a denúncia.",
+      });
+    }
   };
 
   return (

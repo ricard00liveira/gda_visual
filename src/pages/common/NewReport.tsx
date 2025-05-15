@@ -1,360 +1,445 @@
+import { Asterisk } from "@/components/ui/asterisk";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Upload } from "lucide-react";
+  getLogradourosPorMunicipio,
+  getMunicipios,
+} from "@/services/locations";
+import { enviarDenunciaComum } from "@/services/reportCommon";
+import { uploadAnexos } from "@/services/uploadFiles";
 import { useEffect, useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
-
-import { ReporterSection } from "@/components/ReporterSection";
-import { Reporter } from "@/types/reporter";
-import api from "@/lib/axiosConfig";
-import {
-  ToastProvider,
-  Toast,
-  ToastTitle,
-  ToastDescription,
-  ToastViewport,
-} from "@/components/ui/toast";
 import { useNavigate } from "react-router-dom";
 
-const NewReport = () => {
+export default function NewReport() {
   const navigate = useNavigate();
-  const [showToast, setShowToast] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [cpfProfile, setCpfProfile] = useState<string | null>(null);
-  const { toast } = useToast();
-  const [files, setFiles] = useState<File[]>([]);
-  const [isAnonymous, setIsAnonymous] = useState(false);
-  const [selectedReporter, setSelectedReporter] = useState<Reporter | null>(
-    null
-  );
-  const [selectedFact, setSelectedFact] = useState<string | null>(null);
-  const [description, setDescription] = useState<string | null>(null);
+  const { user } = useAuth();
+  const cpfProfile = user?.cpf;
 
-  const [subFacts, setSubFacts] = useState<
-    Record<number, { id: number; nome: string }[]>
-  >({});
-  const [municipalityList, setMunicipalityList] = useState<
-    { id: number; nome: string }[]
-  >([]);
-  const [factList, setFactList] = useState<
-    { id: number; nome: string; subfatos: { id: number; nome: string }[] }[]
-  >([]);
-  const [selectedMunicipality, setSelectedMunicipality] = useState<
-    string | null
-  >(null);
-  const [addresses, setAddresses] = useState<{ id: number; nome: string }[]>(
-    []
-  );
-  const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [municipios, setMunicipios] = useState([]);
+  const [municipioId, setMunicipioId] = useState<number | null>(null);
+  const [logradouroBusca, setLogradouroBusca] = useState("");
+  const [logradouros, setLogradouros] = useState<any[]>([]);
+  const [logradouroId, setLogradouroId] = useState<number | null>(null);
+  const [mostrarSugestoesLogradouros, setMostrarSugestoesLogradouros] =
+    useState(false);
+
+  const [numero, setNumero] = useState("");
+  const [semNumero, setSemNumero] = useState(false);
+  const [complemento, setComplemento] = useState("");
+  const [semComplemento, setSemComplemento] = useState(false);
+  const [bairro, setBairro] = useState("");
+  const [referencia, setReferencia] = useState("");
+  const [historico, setHistorico] = useState("");
+  const [validaLocalizacao, setValidaLocalizacao] = useState(false);
+  const [validaHistorico, setValidaHistorico] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
+  const [infrator, setInfrator] = useState("");
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [municipalityResponses, factResponses] = await Promise.all([
-          api.get("/municipios/"),
-          api.get("/fatos/"),
-        ]);
-
-        setMunicipalityList(municipalityResponses.data);
-
-        const factIds = factResponses.data.map((fact: any) => fact.id);
-        const subFactRequests = factIds.map((id) =>
-          api.get(`/fatos/${id}/subfatos/`)
-        );
-        const subFactResponses = await Promise.all(subFactRequests);
-
-        const subFactMap = subFactResponses.reduce((acc: any, res, index) => {
-          acc[factIds[index]] = res.data.map((subfact: any) => ({
-            id: subfact.id,
-            nome: subfact.nome,
-          }));
-          return acc;
-        }, {});
-        setSubFacts(subFactMap);
-
-        const factData = factResponses.data.map((fact: any) => ({
-          id: fact.id,
-          nome: fact.nome,
-          subfatos: subFactMap[fact.id] || [],
-        }));
-        setFactList(factData);
-        const pegaCpf = localStorage.getItem("cpf");
-        setCpfProfile(pegaCpf);
-      } catch (error) {
-        console.error("Erro ao buscar dados:", error);
-      }
-    };
-    fetchData();
+    getMunicipios().then(setMunicipios);
   }, []);
 
-  const fetchAddresses = async (municipalityId: string) => {
-    try {
-      const response = await api.get(`/logradouros/${municipalityId}/`);
-      console.log("Resposta da API de logradouros:", response.data); // Verifica estrutura
-
-      let data = response.data;
-
-      if (!Array.isArray(data) && typeof data === "object") {
-        data = Object.values(data);
+  useEffect(() => {
+    const fetchLogradouros = async () => {
+      if (municipioId && logradouroBusca.length >= 3) {
+        const result = await getLogradourosPorMunicipio(
+          municipioId,
+          logradouroBusca
+        );
+        setLogradouros(result.results || []);
       }
+    };
 
-      if (Array.isArray(data)) {
-        setAddresses(data);
-      } else {
-        console.error("Formato inesperado para logradouros:", data);
-        setAddresses([]);
-      }
-
-      setSelectedAddress(null);
-    } catch (error) {
-      console.error("Erro ao buscar logradouros:", error);
-      setAddresses([]);
+    if (logradouroBusca.length < 3) {
+      setLogradouros([]);
+      setMostrarSugestoesLogradouros(false);
+      setLogradouroId(null);
+    } else {
+      fetchLogradouros();
     }
-  };
+  }, [logradouroBusca, municipioId]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files || []);
+  useEffect(() => {
+    setValidaLocalizacao(municipioId !== null && logradouroId !== null);
+  }, [municipioId, logradouroId]);
 
-    if (selectedFiles.length + files.length > 4) {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (historico.trim().length < 50) {
       toast({
-        variant: "destructive",
-        title: "Limite excedido",
-        description: "Você pode enviar no máximo 4 arquivos.",
+        title: "Erro!",
+        variant: "warning",
+        description: "Descreva o fato com no mínimo 50 caracteres.",
       });
       return;
     }
 
-    setFiles((prev) => [...prev, ...selectedFiles]);
-  };
-
-  const removeFile = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    if (
-      !selectedMunicipality ||
-      !selectedAddress ||
-      !selectedFact ||
-      !description.trim()
-    ) {
-      setError("Preencha todos os campos obrigatórios.");
-      return;
-    }
-
-    const reportData = {
-      municipio: selectedMunicipality,
-      endereco: selectedAddress,
-      fato: selectedFact.split("-")[0],
-      subfato: selectedFact.split("-")[1],
-      descricao: description,
-      // anonima: isAnonymous,
-      denunciante: cpfProfile,
+    const payload: any = {
+      descricao: historico,
+      municipio: municipioId,
+      endereco: logradouroId,
+      numero: semNumero || numero.trim() === "" ? null : numero,
+      complemento:
+        semComplemento || complemento.trim() === "" ? null : complemento,
+      bairro: bairro.trim() !== "" ? bairro : null,
+      ponto_referencia: referencia.trim() !== "" ? referencia : null,
     };
-    setLoading(true);
     try {
-      await api.post("denuncias/create", reportData);
-      setShowToast(true);
-      setTimeout(() => navigate("/comum/minhas-denuncias"), 3000);
-    } catch (erro) {
-      console.log(erro);
-      setError("Erro ao registrar! Verifique os dados e tente novamente.");
-    } finally {
-      setLoading(false);
+      const response = await enviarDenunciaComum(payload);
+      if (response.numero && files.length > 0) {
+        await uploadAnexos(response.numero, files);
+      }
+      toast({
+        title: "Sucesso!",
+        variant: "success",
+        description: "Denúncia enviada com sucesso.",
+      });
+      limparCampos();
+      navigate("/nova-denuncia/success");
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        title: "Erro!",
+        variant: "warning",
+        description:
+          error?.response?.data?.error || "Erro ao enviar a denúncia.",
+      });
     }
   };
+  const limparCampos = () => {
+    setMunicipioId(null);
+    setLogradouroId(null);
+    setLogradouroBusca("");
+    setNumero("");
+    setSemNumero(false);
+    setComplemento("");
+    setSemComplemento(false);
+    setBairro("");
+    setReferencia("");
+    setHistorico("");
+    setValidaLocalizacao(false);
+    setValidaHistorico(false);
+    setFiles([]);
+    setInfrator("");
+  };
+
   return (
-    <ToastProvider>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            Nova Denúncia
-          </h1>
-          <p className="text-sm md:text-base text-muted-foreground mt-1">
-            Preencha o formulário abaixo para registrar uma nova denúncia
-          </p>
-        </div>
-
-        <form className="space-y-6" onSubmit={handleSubmit}>
-          <ReporterSection
-            selectedReporter={selectedReporter}
-            setSelectedReporter={setSelectedReporter}
-            isAnonymous={isAnonymous}
-            setIsAnonymous={setIsAnonymous}
-          />
-
-          <div className="bg-card rounded-xl shadow-sm border p-4 md:p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-card-foreground">
-              Localização
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Select
-                onValueChange={(value) => {
-                  setSelectedMunicipality(value);
-                  fetchAddresses(value); // Atualiza os logradouros ao selecionar município
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma cidade" />
-                </SelectTrigger>
-                <SelectContent>
-                  {municipalityList.map((city) => (
-                    <SelectItem key={city.id} value={city.id.toString()}>
-                      {city.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Input placeholder="Bairro" />
-              <Select
-                disabled={!addresses.length}
-                onValueChange={(value) => {
-                  setSelectedAddress(value);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={
-                      addresses.length
-                        ? "Selecione um logradouro"
-                        : "Nenhum logradouro disponível"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.isArray(addresses) && addresses.length > 0 ? (
-                    addresses
-                      .filter((address) => address && address.id !== undefined) // Filtra itens inválidos
-                      .map((address) => (
-                        <SelectItem key={address.id} value={String(address.id)}>
-                          {" "}
-                          {/* Usa String() para evitar erro */}
-                          {address.nome || "Logradouro sem nome"}
-                        </SelectItem>
-                      ))
-                  ) : (
-                    <p className="text-muted-foreground text-sm p-2">
-                      Nenhum logradouro disponível
-                    </p>
-                  )}
-                </SelectContent>
-              </Select>
-              <Input
-                placeholder="Ponto de Referência"
-                className="md:col-span-2"
-              />
-            </div>
-          </div>
-
-          <div className="bg-card rounded-xl shadow-sm border p-4 md:p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-card-foreground">
-              Detalhes da Denúncia
-            </h2>
-            <Select
-              onValueChange={(value) => {
-                setSelectedFact(value);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o tipo da denúncia" />
-              </SelectTrigger>
-              <SelectContent>
-                {factList.flatMap((fact) =>
-                  fact.subfatos.map((subfact) => (
-                    <SelectItem
-                      key={subfact.id}
-                      value={`${fact.id}-${subfact.id}`}
-                    >
-                      {fact.nome} : {subfact.nome}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-
-            <Textarea
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Descreva os detalhes da ocorrência... Mínimo de 10 caracteres."
-              className="min-h-[150px]"
-            />
-          </div>
-
-          <div className="bg-card rounded-xl shadow-sm border p-4 md:p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-card-foreground">
-              Evidências
-            </h2>
-            <div className="flex items-center justify-center w-full">
-              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/70">
-                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">
-                    Clique para fazer upload
-                  </p>
-                  <p className="text-xs text-muted-foreground/70">
-                    (Máximo 4 arquivos)
-                  </p>
-                </div>
-                <input
-                  type="file"
-                  className="hidden"
-                  multiple
-                  onChange={handleFileChange}
-                  accept="image/*,video/*"
-                  disabled
-                />
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-400 bg-clip-text text-transparent">
+          Nova Denúncia
+        </h1>
+        <p className="text-sm md:text-base text-muted-foreground mt-1">
+          Registre uma nova denúncia ambiental.
+        </p>
+      </div>
+      <div className="bg-card rounded-xl shadow-sm border p-4 md:p-6">
+        <div className="max-w-2xl mx-auto p-4 space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <p className="text-center">
+                Os campos irão aparecer automaticamente conforme você preencher
+                os dados.
+              </p>
+              <hr className="my-4" />
+              <label className="font-medium">
+                Município:
+                <Asterisk />
               </label>
-            </div>
-            {files.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {files.map((file, index) => (
-                  <div
-                    key={index}
-                    className="relative bg-muted p-2 rounded-lg group"
-                  >
-                    <button
-                      onClick={() => removeFile(index)}
-                      className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      ×
-                    </button>
-                    <p className="text-sm text-card-foreground truncate">
-                      {file.name}
-                    </p>
-                  </div>
+              <select
+                className={`w-full border rounded px-2 py-1 bg-white transition-colors
+                    ${
+                      municipioId
+                        ? "border-emerald-200 text-gray-700 hover:border-emerald-400 placeholder:text-gray-400"
+                        : "border-black text-black placeholder:text-gray-600"
+                    }
+                  `}
+                value={municipioId ?? ""}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setMunicipioId(val ? Number(val) : null);
+                  setLogradouros([]);
+                  setLogradouroId(null);
+                  setLogradouroBusca("");
+                }}
+              >
+                <option value="">Selecione uma cidade</option>
+                {municipios.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.nome}
+                  </option>
                 ))}
+              </select>
+            </div>
+
+            {municipioId && (
+              <div className="relative">
+                <label className="block font-medium mb-1">
+                  Logradouro:
+                  <Asterisk />
+                </label>
+                <input
+                  type="text"
+                  className={`w-full border rounded px-2 py-1 bg-white transition-colors
+                    ${
+                      logradouroId
+                        ? "border-emerald-200 text-gray-700 hover:border-emerald-400 placeholder:text-gray-400"
+                        : "border-black text-black placeholder:text-gray-600"
+                    }
+                  `}
+                  placeholder="Digite parte do nome da rua/avenida/travessa"
+                  value={logradouroBusca}
+                  onChange={(e) => {
+                    setLogradouroBusca(e.target.value);
+                    setMostrarSugestoesLogradouros(true);
+                  }}
+                  onFocus={() => setMostrarSugestoesLogradouros(true)}
+                  onBlur={() =>
+                    setTimeout(() => setMostrarSugestoesLogradouros(false), 200)
+                  }
+                />
+                {mostrarSugestoesLogradouros && logradouros.length > 0 && (
+                  <ul className="absolute z-50 w-full bg-white border rounded mt-1 shadow max-h-60 overflow-y-auto">
+                    {logradouros.map((l) => (
+                      <li
+                        key={l.id}
+                        onMouseDown={() => {
+                          setLogradouroId(l.id);
+                          setLogradouroBusca(l.nome);
+                          setMostrarSugestoesLogradouros(false);
+                        }}
+                        className="px-2 py-1 hover:bg-emerald-100 cursor-pointer"
+                      >
+                        {l.nome}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             )}
-          </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Registrando..." : "Registrar denúncia"}
-          </Button>
-        </form>
+            {validaLocalizacao && (
+              <>
+                <div className="flex gap-2 items-center">
+                  <label className="block font-medium mb-1">Número:</label>
+                  <Input
+                    placeholder="Número"
+                    className={`w-full border rounded px-2 py-1 bg-white transition-colors
+                      ${
+                        numero || semNumero
+                          ? "border-emerald-200 text-gray-700 hover:border-emerald-400 placeholder:text-gray-400"
+                          : "border-black text-black placeholder:text-gray-600"
+                      }
+                    `}
+                    value={numero}
+                    onChange={(e) => setNumero(e.target.value)}
+                    disabled={semNumero}
+                  />
+                  <Checkbox
+                    checked={semNumero}
+                    onCheckedChange={(v) => {
+                      const checked = v === true;
+                      setSemNumero(checked);
+                      if (checked) setNumero("");
+                    }}
+                  />
+                  <span className="text-sm">Sem Número</span>
+                </div>
+
+                <div className="flex gap-2 items-center">
+                  <label className="block font-medium mb-1">Complemento:</label>
+                  <Input
+                    placeholder="Apto, Bloco, Casa, etc."
+                    value={complemento}
+                    className={`w-full border rounded px-2 py-1 bg-white transition-colors
+                      ${
+                        complemento || semComplemento
+                          ? "border-emerald-200 text-gray-700 hover:border-emerald-400 placeholder:text-gray-400"
+                          : "border-black text-black placeholder:text-gray-600"
+                      }
+                    `}
+                    onChange={(e) => setComplemento(e.target.value)}
+                    disabled={semComplemento}
+                  />
+                  <Checkbox
+                    checked={semComplemento}
+                    onCheckedChange={(v) => {
+                      const checked = v === true;
+                      setSemComplemento(checked);
+                      if (checked) setComplemento("");
+                    }}
+                  />
+                  <span className="text-sm">Sem Complemento</span>
+                </div>
+                <div className="flex gap-2 items-center">
+                  <label className="block font-medium mb-1">Bairro:</label>
+                  <Input
+                    placeholder="Digite seu bairro ou localidade"
+                    value={bairro}
+                    className={`w-full border rounded px-2 py-1 bg-white transition-colors
+                    ${
+                      bairro
+                        ? "border-emerald-200 text-gray-700 hover:border-emerald-400 placeholder:text-gray-400"
+                        : "border-black text-black placeholder:text-gray-600"
+                    }
+                  `}
+                    onChange={(e) => setBairro(e.target.value)}
+                  />
+                </div>
+                <div className="flex gap-2 items-center">
+                  <label className="block font-medium mb-1">
+                    Ponto de Referência:
+                  </label>
+                  <Input
+                    placeholder="Observações sobre local"
+                    value={referencia}
+                    className={`w-full border rounded px-2 py-1 bg-white transition-colors
+                    ${
+                      referencia
+                        ? "border-emerald-200 text-gray-700 hover:border-emerald-400 placeholder:text-gray-400"
+                        : "border-black text-black placeholder:text-gray-600"
+                    }
+                  `}
+                    onChange={(e) => setReferencia(e.target.value)}
+                  />
+                </div>
+                <hr className="my-4" />
+                <div>
+                  <label className="block font-medium mb-1">
+                    Descreva o fato:
+                    <Asterisk />
+                  </label>
+                  <Textarea
+                    placeholder="Descreva o que aconteceu com máximo de detalhes e informações possíveis."
+                    value={historico}
+                    maxLength={2000}
+                    className={`w-full border rounded px-2 py-1 bg-white transition-colors
+                    ${
+                      historico.length >= 50
+                        ? "border-emerald-200 text-gray-700 hover:border-emerald-400 placeholder:text-gray-400"
+                        : "border-black text-black placeholder:text-gray-600"
+                    }
+                  `}
+                    onChange={(e) => {
+                      setHistorico(e.target.value);
+                      historico.length < 50
+                        ? setValidaHistorico(false)
+                        : setValidaHistorico(true);
+                    }}
+                    onClick={() => {
+                      !numero ? setSemNumero(true) : setSemNumero(false);
+                      !complemento
+                        ? setSemComplemento(true)
+                        : setSemComplemento(false);
+                    }}
+                  />
+                  <div className="flex justify-between text-sm">
+                    <div
+                      className={`text-left ${
+                        historico.length < 50
+                          ? "text-red-500 font-semibold"
+                          : "invisible"
+                      }`}
+                    >
+                      Mínimo de caracteres: {historico.length}/50
+                    </div>
+                    <div
+                      className={`${
+                        historico.length > 1800
+                          ? "text-red-500 font-semibold"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      {historico.length} / 2000 caracteres
+                    </div>
+                  </div>
+                </div>
+                {validaHistorico && (
+                  <>
+                    <hr className="my-4" />
+                    <div>
+                      <label className="block font-medium mb-1">
+                        Anexe fotos ou vídeo (máx. 4) (Opcional)
+                      </label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => {
+                          const selected = Array.from(e.target.files || []);
+                          if (selected.length + files.length > 4) {
+                            e.target.files = null;
+                            toast({
+                              title: "Limite de arquivos excedido",
+                              variant: "warning",
+                            });
+                            return;
+                          }
+                          setFiles([...files, ...selected]);
+                        }}
+                      />
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {files.map((file, index) => (
+                          <div key={index} className="relative">
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt={`preview-${index}`}
+                              className="h-16 w-16 object-cover rounded border"
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setFiles((prev) =>
+                                  prev.filter((_, i) => i !== index)
+                                )
+                              }
+                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p>
+                        <label className="block font-medium mb-1">
+                          Infrator (Opcional)
+                        </label>
+                      </p>
+                      <Input
+                        placeholder="Nome ou apelido dos envolvidos"
+                        value={infrator}
+                        className={`w-full border rounded px-2 py-1 bg-white transition-colors
+                    ${
+                      infrator
+                        ? "border-emerald-200 text-gray-700 hover:border-emerald-400 placeholder:text-gray-400"
+                        : "border-black text-black placeholder:text-gray-600"
+                    }
+                  `}
+                        onChange={(e) => setInfrator(e.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+                <hr className="my-4" />
+                <Button
+                  type="submit"
+                  className="w-full bg-emerald-500 hover:bg-emerald-600"
+                  disabled={!validaLocalizacao || !validaHistorico}
+                >
+                  Enviar Denúncia
+                </Button>
+              </>
+            )}
+          </form>
+        </div>
       </div>
-      {showToast && (
-        <Toast>
-          <ToastTitle>Denúncia registrada sucesso!</ToastTitle>
-          <ToastDescription>
-            Você será redirecionado para o Denúncias.
-          </ToastDescription>
-        </Toast>
-      )}
-      <ToastViewport />
-    </ToastProvider>
+    </div>
   );
-};
-
-export default NewReport;
+}
