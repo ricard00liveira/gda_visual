@@ -46,6 +46,8 @@ export default function NewReport() {
   const [files, setFiles] = useState<File[]>([]);
   const [infrator, setInfrator] = useState("");
   const [modalAberto, setModalAberto] = useState(false);
+  const [askFiles, setAskFiles] = useState(false);
+  const [askInfrator, setAskInfrator] = useState(false);
 
   useEffect(() => {
     getMunicipios().then(setMunicipios);
@@ -95,19 +97,15 @@ export default function NewReport() {
         semComplemento || complemento.trim() === "" ? null : complemento,
       bairro: bairro.trim() !== "" ? bairro : null,
       ponto_referencia: referencia.trim() !== "" ? referencia : null,
+      infrator: askInfrator && infrator.trim() !== "" ? infrator : null,
     };
 
     try {
       setModalAberto(true);
       const response = await enviarDenunciaComum(payload);
-      if (response.numero && files.length > 0) {
+      if (response.numero && files.length > 0 && askFiles) {
         await uploadAnexos(response.numero, files);
       }
-      toast({
-        title: "Sucesso!",
-        variant: "success",
-        description: "Denúncia enviada com sucesso.",
-      });
       navigate("/comum/nova-denuncia/success");
     } catch (error: any) {
       console.error(error);
@@ -137,6 +135,11 @@ export default function NewReport() {
     setValidaHistorico(false);
     setFiles([]);
     setInfrator("");
+    setAskFiles(false);
+    setAskInfrator(false);
+    setLogradouros([]);
+    setMostrarSugestoesLogradouros(false);
+    setMunicipios([]);
   };
 
   return (
@@ -151,19 +154,28 @@ export default function NewReport() {
       </div>
       <Dialog open={modalAberto}>
         <DialogOverlay className="fixed inset-0 bg-black/50 z-50" />
-        <DialogContent className="bg-white p-6 rounded shadow-lg max-w-sm mx-auto z-50 [&>button.absolute]:hidden">
-          <DialogHeader>
-            <DialogTitle>Enviando denúncia</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="flex flex-col items-center justify-center text-center bg-white p-6 rounded-lg shadow-lg max-w-sm mx-auto z-50 [&>button.absolute]:hidden">
+          <img
+            src="/logo_gda.png"
+            alt="Logo GDA"
+            className="w-20 h-20 mb-4 object-contain"
+          />
+
+          <DialogHeader className="space-y-2">
+            <DialogTitle className="text-lg font-semibold text-gray-900">
+              Enviando denúncia
+            </DialogTitle>
+            <DialogDescription className="text-sm text-gray-500">
               Aguarde enquanto processamos sua solicitação.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex justify-center items-center mt-4">
+          <div className="mt-6">
             <Loading />
           </div>
         </DialogContent>
       </Dialog>
+
       {!modalAberto && (
         <div className="bg-card rounded-xl shadow-sm border p-4 md:p-6">
           <div className="max-w-2xl mx-auto p-4 space-y-6">
@@ -393,89 +405,130 @@ export default function NewReport() {
                   </div>
                   {validaHistorico && (
                     <>
+                      {/* Inicio upload */}
                       <hr className="my-4" />
                       <div>
-                        <label className="block font-medium mb-1">
-                          Anexe fotos ou vídeo (máx. 4) (Opcional)
-                        </label>
-                        <input
-                          type="file"
-                          accept=".jpg,.jpeg,.png,.mp4"
-                          multiple
-                          onChange={(e) => {
-                            const tipos = ["jpg", "jpeg", "png", "mp4"];
-                            const arqList = Array.from(e.target.files || []);
-                            const arquivosValidos = arqList.filter((file) => {
-                              const ext = file.name
-                                .split(".")
-                                .pop()
-                                ?.toLowerCase();
-                              const valido = tipos.includes(ext || "");
-                              if (!valido) {
-                                toast({
-                                  title: "Arquivo inválido",
-                                  description: `O arquivo ${file.name} não é permitido.`,
-                                  variant: "destructive",
-                                });
-                              }
-                              e.target.value = "";
-                              return valido;
-                            });
-                            if (arquivosValidos.length + files.length > 4) {
-                              e.target.files = null;
-                              toast({
-                                title: "Limite de arquivos excedido",
-                                variant: "warning",
-                              });
-                              e.target.value = "";
-                              return;
-                            }
-                            setFiles([...files, ...arquivosValidos]);
-                          }}
-                        />
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {files.map((file, index) => (
-                            <div key={index} className="relative">
-                              <img
-                                src={URL.createObjectURL(file)}
-                                alt={`preview-${index}`}
-                                className="h-16 w-16 object-cover rounded border"
-                              />
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setFiles((prev) =>
-                                    prev.filter((_, i) => i !== index)
-                                  )
+                        <p>
+                          Deseja enviar fotos ou vídeos na sua denúncia? Sim{" "}
+                          <Checkbox
+                            checked={askFiles}
+                            onCheckedChange={(v) => {
+                              const checked = v === true;
+                              setAskFiles(checked);
+                            }}
+                          />
+                        </p>
+                        {askFiles && (
+                          <>
+                            <br />
+                            <p>
+                              <label className="block font-medium mb-1">
+                                Anexe fotos ou vídeo (máx. 4) (Opcional)
+                              </label>
+                            </p>
+                            <input
+                              type="file"
+                              accept=".jpg,.jpeg,.png,.mp4"
+                              multiple
+                              onChange={(e) => {
+                                const tipos = ["jpg", "jpeg", "png", "mp4"];
+                                const arqList = Array.from(
+                                  e.target.files || []
+                                );
+                                const arquivosValidos = arqList.filter(
+                                  (file) => {
+                                    const ext = file.name
+                                      .split(".")
+                                      .pop()
+                                      ?.toLowerCase();
+                                    const valido = tipos.includes(ext || "");
+                                    if (!valido) {
+                                      toast({
+                                        title: "Arquivo inválido",
+                                        description: `O arquivo ${file.name} não é permitido.`,
+                                        variant: "destructive",
+                                      });
+                                    }
+                                    e.target.value = "";
+                                    return valido;
+                                  }
+                                );
+                                if (arquivosValidos.length + files.length > 4) {
+                                  e.target.files = null;
+                                  toast({
+                                    title: "Limite de arquivos excedido",
+                                    variant: "warning",
+                                  });
+                                  e.target.value = "";
+                                  return;
                                 }
-                                className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs"
-                              >
-                                ×
-                              </button>
+                                setFiles([...files, ...arquivosValidos]);
+                              }}
+                            />
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {files.map((file, index) => (
+                                <div key={index} className="relative">
+                                  <img
+                                    src={URL.createObjectURL(file)}
+                                    alt={`preview-${index}`}
+                                    className="h-16 w-16 object-cover rounded border"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setFiles((prev) =>
+                                        prev.filter((_, i) => i !== index)
+                                      )
+                                    }
+                                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
+                          </>
+                        )}
                       </div>
-
+                      {/* Fim upload */}
+                      <hr className="my-4" />
+                      {/* Inicio infrator */}
                       <div>
                         <p>
-                          <label className="block font-medium mb-1">
-                            Infrator (Opcional)
-                          </label>
+                          Deseja incluir nomes ou apelido de algum envolvido ou
+                          responsável? Sim{" "}
+                          <Checkbox
+                            checked={askInfrator}
+                            onCheckedChange={(v) => {
+                              const checked = v === true;
+                              setAskInfrator(checked);
+                            }}
+                          />
                         </p>
-                        <Input
-                          placeholder="Nome ou apelido dos envolvidos"
-                          value={infrator}
-                          className={`w-full border rounded px-2 py-1 bg-white transition-colors
+                        {askInfrator && (
+                          <>
+                            <br />
+                            <p>
+                              <label className="block font-medium mb-1">
+                                Infrator (Opcional)
+                              </label>
+                            </p>
+                            <Input
+                              placeholder="Nome ou apelido dos envolvidos"
+                              value={infrator}
+                              className={`w-full border rounded px-2 py-1 bg-white transition-colors
                     ${
                       infrator
                         ? "border-emerald-200 text-gray-700 hover:border-emerald-400 placeholder:text-gray-400"
                         : "border-black text-black placeholder:text-gray-600"
                     }
                   `}
-                          onChange={(e) => setInfrator(e.target.value)}
-                        />
+                              onChange={(e) => setInfrator(e.target.value)}
+                            />
+                          </>
+                        )}
                       </div>
+                      {/* Fim infrator */}
                     </>
                   )}
                   <hr className="my-4" />

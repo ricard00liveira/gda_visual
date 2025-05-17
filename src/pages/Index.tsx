@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Leaf, Shield, UserPlus, HelpCircle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -9,8 +8,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useState, useEffect } from "react";
+import { ArrowRight, HelpCircle, Shield, UserPlus } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 const Index = () => {
   const [showDialog, setShowDialog] = useState(false);
@@ -49,7 +49,8 @@ const Index = () => {
         <div className="w-full lg:w-1/2 bg-gradient-to-br from-[#1A1F2C] to-[#2A3441] text-white p-8 lg:p-16 flex flex-col justify-between relative overflow-hidden">
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-8">
-              <Leaf className="w-8 h-8 text-emerald-400" />
+              {/* <Leaf className="w-8 h-8 text-emerald-400" /> */}
+              <img src="/logo_gda.png" alt="Logo GDA" className="w-10 h-10" />
               <h1 className="text-3xl font-bold">GDA</h1>
             </div>
             <h2 className="text-3xl lg:text-4xl font-bold mb-6 leading-tight">

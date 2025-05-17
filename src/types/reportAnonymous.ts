@@ -7,4 +7,5 @@ export interface AnonymousReportForm {
   ponto_referencia?: string;
   latitude?: number;
   longitude?: number;
+  infrator?: string;
 }

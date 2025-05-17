@@ -12,6 +12,11 @@ interface DenunciaPayload {
   longitude?: number;
 }
 
+export interface TranscricaoResponse {
+  transcricao: string;
+  texto_final: string;
+}
+
 export async function getMinhasDenuncias() {
   const response = await api.get("/denuncias/");
   const data = response.data;
@@ -78,6 +83,21 @@ export async function uploadAnexos(
   });
 
   const response = await api.post("/denuncias/anexos/upload/", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return response.data;
+}
+
+export async function transcreverAudio(
+  blob: Blob
+): Promise<TranscricaoResponse> {
+  const formData = new FormData();
+  formData.append("audio", blob, "gravacao.webm");
+
+  const response = await api.post("/denuncias/transcrever-audio/", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
