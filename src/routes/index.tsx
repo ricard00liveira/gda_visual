@@ -101,6 +101,37 @@ export const createRouter = () =>
           ),
         },
         {
+          path: "perfil",
+          element: (
+            <MainLayout>
+              <Profile />
+            </MainLayout>
+          ),
+        },
+        {
+          path: "configuracoes",
+          element: (
+            <MainLayout>
+              <Settings />
+            </MainLayout>
+          ),
+        },
+        {
+          path: "notificacoes",
+          element: (
+            <MainLayout>
+              <Notifications />
+            </MainLayout>
+          ),
+        },
+      ],
+    },
+    // Rota protegida para Administradores
+    {
+      path: "/dashboard",
+      element: <PrivateRoute allowedRoles={["adm"]} />,
+      children: [
+        {
           path: "usuarios",
           element: (
             <MainLayout>
@@ -137,30 +168,6 @@ export const createRouter = () =>
           element: (
             <MainLayout>
               <FactsSubfacts />
-            </MainLayout>
-          ),
-        },
-        {
-          path: "perfil",
-          element: (
-            <MainLayout>
-              <Profile />
-            </MainLayout>
-          ),
-        },
-        {
-          path: "configuracoes",
-          element: (
-            <MainLayout>
-              <Settings />
-            </MainLayout>
-          ),
-        },
-        {
-          path: "notificacoes",
-          element: (
-            <MainLayout>
-              <Notifications />
             </MainLayout>
           ),
         },

@@ -1,4 +1,7 @@
 import { Asterisk } from "@/components/ui/asterisk";
+import AudioRecorder, {
+  AudioRecorderHandles,
+} from "@/components/ui/audioRecorder";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -18,9 +21,10 @@ import {
   getLogradourosPorMunicipio,
   getMunicipios,
 } from "@/services/locations";
+import { transcreverAudio, validarHistorico } from "@/services/report";
 import { enviarDenunciaComum } from "@/services/reportCommon";
 import { uploadAnexos } from "@/services/uploadFiles";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function NewReport() {
@@ -48,6 +52,30 @@ export default function NewReport() {
   const [modalAberto, setModalAberto] = useState(false);
   const [askFiles, setAskFiles] = useState(false);
   const [askInfrator, setAskInfrator] = useState(false);
+  const gravadorRef = useRef<AudioRecorderHandles>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [transcrevendo, setTranscrevendo] = useState(false);
+  const ultimoAudioUrl = useRef<string | null>(null);
+  const [validandoHistorico, setValidandoHistorico] = useState(false);
+
+  useEffect(() => {
+    if (validaLocalizacao) {
+      if (!audioUrl) return;
+      if (audioUrl === ultimoAudioUrl.current) return;
+
+      ultimoAudioUrl.current = audioUrl;
+      transcrever();
+    }
+  }, [audioUrl]);
+
+  useEffect(() => {
+    if (historico.length >= 50) {
+      setValidaHistorico(true);
+    } else {
+      setValidaHistorico(false);
+    }
+  }, [historico]);
 
   useEffect(() => {
     getMunicipios().then(setMunicipios);
@@ -87,7 +115,23 @@ export default function NewReport() {
       });
       return;
     }
-
+    try {
+      setValidandoHistorico(true);
+      const resultado = await validarHistorico(historico);
+      if (resultado === "irrelevante") {
+        toast({
+          title: "Conteúdo irrelevante",
+          variant: "warning",
+          description:
+            "Seu histórico foi considerado irrelevante. Tente novamente.",
+        });
+        return;
+      }
+    } catch (error: any) {
+      console.error("Erro ao validar histórico:", error);
+    } finally {
+      setValidandoHistorico(false);
+    }
     const payload: any = {
       descricao: historico,
       municipio: municipioId,
@@ -140,6 +184,40 @@ export default function NewReport() {
     setLogradouros([]);
     setMostrarSugestoesLogradouros(false);
     setMunicipios([]);
+    setAudioUrl(null);
+    setAudioBlob(null);
+    setTranscrevendo(false);
+  };
+  const transcrever = async () => {
+    if (!audioBlob) return;
+    try {
+      setTranscrevendo(true);
+      const resultado = await transcreverAudio(audioBlob);
+      if (resultado.texto_final === "Irrelevante.") {
+        toast({
+          title: "Áudio irrelevante!",
+          variant: "warning",
+          duration: 3000,
+          description: "O áudio não contém informações relevantes.",
+        });
+        setAudioBlob(null);
+        setAudioUrl(null);
+        resultado.texto_final = "";
+        const temp = historico.trim();
+        setHistorico(temp);
+        return;
+      } else {
+        const historicoAtual = historico.trim();
+        const novoHistorico = historicoAtual + " " + resultado.texto_final;
+        setHistorico(novoHistorico);
+      }
+    } catch (error: any) {
+      console.error("Erro ao transcrever áudio:", error);
+    } finally {
+      setAudioUrl(null);
+      setAudioBlob(null);
+      setTranscrevendo(false);
+    }
   };
 
   return (
@@ -361,6 +439,7 @@ export default function NewReport() {
                     <Textarea
                       placeholder="Descreva o que aconteceu com máximo de detalhes e informações possíveis."
                       value={historico}
+                      disabled={transcrevendo}
                       maxLength={2000}
                       className={`w-full border rounded px-2 py-1 bg-white transition-colors
                     ${
@@ -382,25 +461,57 @@ export default function NewReport() {
                           : setSemComplemento(false);
                       }}
                     />
-                    <div className="flex justify-between text-sm">
-                      <div
-                        className={`text-left ${
-                          historico.length < 50
-                            ? "text-red-500 font-semibold"
-                            : "invisible"
-                        }`}
-                      >
-                        Mínimo de caracteres: {historico.length}/50
-                      </div>
-                      <div
-                        className={`${
-                          historico.length > 1800
-                            ? "text-red-500 font-semibold"
-                            : "text-gray-500"
-                        }`}
-                      >
-                        {historico.length} / 2000 caracteres
-                      </div>
+                    <div className="flex flex-wrap justify-between items-start gap-4 text-sm w-full p-2">
+                      {transcrevendo ? (
+                        <div className="flex flex-col items-center justify-center gap-2 text-center text-red-500 font-semibold min-w-[120px] basis-full justify-center">
+                          <span className="animate-pulse">
+                            Aguarde, transcrevendo...
+                          </span>
+                          <div className="w-6 h-6 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                        </div>
+                      ) : (
+                        <>
+                          {" "}
+                          <div
+                            className={`flex-1 min-w-[120px] ${
+                              historico.length < 50
+                                ? "text-red-500 font-semibold"
+                                : "invisible"
+                            }`}
+                          >
+                            Mínimo de caracteres: {historico.length}/50
+                          </div>
+                          <div className="flex-1 min-w-[200px] flex flex-col items-center text-center">
+                            <AudioRecorder
+                              ref={gravadorRef}
+                              onAudioFinalizado={(blob, url, tempo) => {
+                                if (tempo < 5) {
+                                  toast({
+                                    title: "Áudio muito curto!",
+                                    variant: "warning",
+                                    description:
+                                      "O áudio deve ter pelo menos 5 segundos.",
+                                    duration: 2000,
+                                  });
+                                  return;
+                                } else {
+                                  setAudioUrl(url);
+                                  setAudioBlob(blob);
+                                }
+                              }}
+                            />
+                          </div>
+                          <div
+                            className={`flex-1 min-w-[120px] text-right ${
+                              historico.length > 1800
+                                ? "text-red-500 font-semibold"
+                                : "text-gray-500"
+                            }`}
+                          >
+                            {historico.length} / 2000 caracteres
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                   {validaHistorico && (
@@ -535,9 +646,14 @@ export default function NewReport() {
                   <Button
                     type="submit"
                     className="w-full bg-emerald-500 hover:bg-emerald-600"
-                    disabled={!validaLocalizacao || !validaHistorico}
+                    disabled={
+                      !validaLocalizacao ||
+                      !validaHistorico ||
+                      transcrevendo ||
+                      validandoHistorico
+                    }
                   >
-                    Enviar Denúncia
+                    {validandoHistorico ? "Validando..." : "Enviar Denúncia"}
                   </Button>
                 </>
               )}

@@ -47,7 +47,7 @@ const Login = () => {
     try {
       const { access, refresh } = await loginRequest(cpfValido, password);
       const profile = await getProfile(access);
-      const tipo = profile.tipo;
+      const tipo = profile.tipo_usuario;
 
       if (!["comum", "operador", "adm"].includes(tipo)) {
         throw new Error("Tipo de usuário inválido recebido da API.");
@@ -57,7 +57,7 @@ const Login = () => {
         nome: profile.nome,
         cpf: profile.cpf,
         email: profile.email,
-        tipo: tipo as "comum" | "operador" | "adm",
+        tipo_usuario: tipo as "comum" | "operador" | "adm",
         imagem_perfil_url: profile.imagem_perfil_url,
         user_created: profile.user_created,
       };
@@ -76,12 +76,11 @@ const Login = () => {
         conf_notPush,
         conf_notNewDenuncia,
       });
-
       if (["light", "dark"].includes(conf_tema)) {
         setTheme(conf_tema as "light" | "dark");
       }
       updateLastLoginUser();
-      navigate(user.tipo === "comum" ? "/comum" : "/dashboard");
+      navigate(user.tipo_usuario === "comum" ? "/comum" : "/dashboard");
     } catch (err: any) {
       if (err.response?.status === 401) {
         toast({
@@ -92,6 +91,7 @@ const Login = () => {
         });
         setPassword("");
       } else {
+        console.log(err);
         toast({
           variant: "destructive",
           title: "Erro ao tentar logar",
@@ -103,7 +103,7 @@ const Login = () => {
   };
 
   const handleContinuar = () => {
-    if (user?.tipo === "comum") {
+    if (user?.tipo_usuario === "comum") {
       navigate("/comum");
     } else {
       navigate("/dashboard");

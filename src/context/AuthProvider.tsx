@@ -1,10 +1,10 @@
 import { ReactNode, createContext, useEffect, useState } from "react";
 
 type UserType = {
+  tipo_usuario: "comum" | "operador" | "adm";
   nome: string;
   cpf: string;
   email: string;
-  tipo: "comum" | "operador" | "adm";
   imagem_perfil_url?: string;
   user_created?: string;
 };
@@ -54,7 +54,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       nome: localStorage.getItem("nome") || "",
       cpf: localStorage.getItem("cpf") || "",
       email: localStorage.getItem("email") || "",
-      tipo: (localStorage.getItem("tipo") || "") as UserType["tipo"],
+      tipo_usuario: (localStorage.getItem("tipo_usuario") ||
+        "") as UserType["tipo_usuario"],
       imagem_perfil_url: localStorage.getItem("imagem_perfil_url") || "",
     };
 
@@ -69,7 +70,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       ),
     };
 
-    if (savedToken && savedUser.tipo) {
+    if (savedToken && savedUser.tipo_usuario) {
       setToken(savedToken);
       setUser(savedUser);
       setPreferences(savedPreferences);
@@ -109,7 +110,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("nome", user.nome);
     localStorage.setItem("cpf", user.cpf);
     localStorage.setItem("email", user.email);
-    localStorage.setItem("tipo", user.tipo);
+    localStorage.setItem("tipo_usuario", user.tipo_usuario);
     localStorage.setItem("imagem_perfil_url", user.imagem_perfil_url || "");
     localStorage.setItem("lastLogin", new Date().toISOString());
     localStorage.setItem("dateCreated", user.user_created || "");

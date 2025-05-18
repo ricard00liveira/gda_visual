@@ -13,7 +13,7 @@ import {
   getLogradourosPorMunicipio,
   getMunicipios,
 } from "@/services/locations";
-import { transcreverAudio } from "@/services/report";
+import { transcreverAudio, validarHistorico } from "@/services/report";
 import { enviarDenunciaAnonima } from "@/services/reportAnonymous";
 import { uploadAnexos } from "@/services/uploadFiles";
 import { AnonymousReportForm } from "@/types/reportAnonymous";
@@ -71,6 +71,7 @@ const Anonymous = ({
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [transcrevendo, setTranscrevendo] = useState(false);
   const ultimoAudioUrl = useRef<string | null>(null);
+  const [validandoHistorico, setValidandoHistorico] = useState(false);
 
   useEffect(() => {
     if (validaLocalizacao) {
@@ -78,7 +79,6 @@ const Anonymous = ({
       if (audioUrl === ultimoAudioUrl.current) return;
 
       ultimoAudioUrl.current = audioUrl;
-      console.log("audio mais de 5s");
       transcrever();
     }
   }, [audioUrl]);
@@ -219,6 +219,23 @@ const Anonymous = ({
       });
       return;
     }
+    try {
+      setValidandoHistorico(true);
+      const resultado = await validarHistorico(historico);
+      if (resultado === "irrelevante") {
+        toast({
+          title: "Conteúdo irrelevante",
+          variant: "warning",
+          description:
+            "Seu histórico foi considerado irrelevante. Tente novamente.",
+        });
+        return;
+      }
+    } catch (error: any) {
+      console.error("Erro ao validar histórico:", error);
+    } finally {
+      setValidandoHistorico(false);
+    }
 
     const payload: AnonymousReportForm = {
       descricao: historico,
@@ -287,9 +304,23 @@ const Anonymous = ({
     try {
       setTranscrevendo(true);
       const resultado = await transcreverAudio(audioBlob);
-      const historicoAtual = historico.trim();
-      const novoHistorico = historicoAtual + " " + resultado.texto_final;
-      setHistorico(novoHistorico);
+      if (resultado.texto_final === "Irrelevante.") {
+        toast({
+          title: "Áudio irrelevante!",
+          variant: "warning",
+          description: "O áudio não contém informações relevantes.",
+        });
+        setAudioBlob(null);
+        setAudioUrl(null);
+        resultado.texto_final = "";
+        const temp = historico.trim();
+        setHistorico(temp);
+        return;
+      } else {
+        const historicoAtual = historico.trim();
+        const novoHistorico = historicoAtual + " " + resultado.texto_final;
+        setHistorico(novoHistorico);
+      }
     } catch (error: any) {
       console.error("Erro ao transcrever áudio:", error);
     } finally {
@@ -699,10 +730,13 @@ const Anonymous = ({
                 type="submit"
                 className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white py-6 text-lg font-semibold transition-all duration-300 shadow-xl hover:shadow-emerald-500/20 transform hover:-translate-y-0.5"
                 disabled={
-                  !validaLocalizacao || !validaHistorico || transcrevendo
+                  !validaLocalizacao ||
+                  !validaHistorico ||
+                  transcrevendo ||
+                  validandoHistorico
                 }
               >
-                Enviar Denúncia
+                {validandoHistorico ? "Validando..." : "Enviar Denúncia"}
               </Button>
             </form>
           </>

@@ -105,3 +105,16 @@ export async function transcreverAudio(
 
   return response.data;
 }
+
+export async function validarHistorico(
+  historico: string
+): Promise<"valido" | "irrelevante"> {
+  try {
+    const response = await api.post("/denuncias/validar-historico/", {
+      historico,
+    });
+    return response.data.classificacao;
+  } catch (error: any) {
+    throw error?.response?.data?.error || "Erro ao validar o histórico.";
+  }
+}

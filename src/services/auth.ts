@@ -8,7 +8,7 @@ export interface LoginResponse {
 export interface ProfileResponse {
   nome: string;
   cpf: string;
-  tipo: "comum" | "operador" | "adm";
+  tipo_usuario: "comum" | "operador" | "adm";
   email: string;
   imagem_perfil_url?: string;
   conf_tema: string;

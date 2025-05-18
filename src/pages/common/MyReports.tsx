@@ -1,3 +1,4 @@
+import { ReportDetailsModal } from "@/components/reports/ReportDetailsModal";
 import { Accordion } from "@/components/ui/accordion";
 import GrupoDenuncias from "@/components/ui/grupoDenuncias";
 import { getLogradouroById, getMunicipios } from "@/services/locations";
@@ -16,6 +17,7 @@ const MyReports = () => {
   const [municipios, setMunicipios] = useState<Record<number, string>>({});
   const [logradouros, setLogradouros] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
+  const [selectedReport, setSelectedReport] = useState<any | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -86,6 +88,7 @@ const MyReports = () => {
               value="analise"
               municipios={municipios}
               logradouros={logradouros}
+              onSelect={setSelectedReport}
             />
 
             <GrupoDenuncias
@@ -99,6 +102,7 @@ const MyReports = () => {
               value="fila"
               municipios={municipios}
               logradouros={logradouros}
+              onSelect={setSelectedReport}
             />
 
             <GrupoDenuncias
@@ -112,6 +116,7 @@ const MyReports = () => {
               value="atendimento"
               municipios={municipios}
               logradouros={logradouros}
+              onSelect={setSelectedReport}
             />
 
             <GrupoDenuncias
@@ -125,6 +130,7 @@ const MyReports = () => {
               value="concluida"
               municipios={municipios}
               logradouros={logradouros}
+              onSelect={setSelectedReport}
             />
 
             <GrupoDenuncias
@@ -138,8 +144,21 @@ const MyReports = () => {
               value="rejeitada"
               municipios={municipios}
               logradouros={logradouros}
+              onSelect={setSelectedReport}
             />
           </Accordion>
+        )}
+        {selectedReport && (
+          <ReportDetailsModal
+            report={selectedReport}
+            onClose={() => setSelectedReport(null)}
+            onSave={(updated) => {
+              setReports((prev) =>
+                prev.map((r) => (r.numero === updated.numero ? updated : r))
+              );
+              setSelectedReport(null);
+            }}
+          />
         )}
       </div>
     </div>

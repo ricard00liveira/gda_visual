@@ -21,6 +21,24 @@ export function getStatusColor(status: string): string {
   }
 }
 
+// Função auxiliar para retornar o status formatado
+export function getStatus(status: string): string {
+  switch (status) {
+    case "analise":
+      return "Em Análise";
+    case "fila":
+      return "Na Fila";
+    case "atendimento":
+      return "Em Atendimento";
+    case "concluida":
+      return "Concluída";
+    case "rejeitada":
+      return "Rejeitada";
+    default:
+      return "Em Análise";
+  }
+}
+
 // Componente principal
 export default function TypeReportIcon({ status, type }: Props) {
   const getStatusIcon = () => {

@@ -1,4 +1,3 @@
-import { LogOut, Settings, User, UserCircle2, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -7,10 +6,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useNavigate } from "react-router-dom";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
+import { LogOut, Menu, Settings, User, UserCircle2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export const TopBar = () => {
   const navigate = useNavigate();
@@ -68,7 +68,9 @@ export const TopBar = () => {
             <div className="text-sm">
               <p className="font-medium">{user?.nome || "Carregando..."}</p>
               <p className="text-muted-foreground">
-                {user?.tipo ? getUserRole(user.tipo) : "Carregando..."}
+                {user?.tipo_usuario
+                  ? getUserRole(user.tipo_usuario)
+                  : "Carregando..."}
               </p>
             </div>
           </div>
@@ -77,7 +79,9 @@ export const TopBar = () => {
           <DropdownMenuItem
             onClick={() =>
               navigate(
-                user?.tipo === "comum" ? "/comum/perfil" : "/dashboard/perfil"
+                user?.tipo_usuario === "comum"
+                  ? "/comum/perfil"
+                  : "/dashboard/perfil"
               )
             }
             className="cursor-pointer"
@@ -88,7 +92,7 @@ export const TopBar = () => {
           <DropdownMenuItem
             onClick={() =>
               navigate(
-                user?.tipo === "comum"
+                user?.tipo_usuario === "comum"
                   ? "/comum/configuracoes"
                   : "/dashboard/configuracoes"
               )

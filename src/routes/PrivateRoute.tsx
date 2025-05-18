@@ -1,7 +1,7 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { AuthContext } from "@/context/AuthProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useContext } from "react";
-import { AuthContext } from "@/context/AuthProvider";
+import { Navigate, Outlet } from "react-router-dom";
 
 interface ProtectedRouteProps {
   allowedRoles: ("comum" | "operador" | "adm")[];
@@ -11,9 +11,9 @@ const PrivateRoute = ({ allowedRoles }: ProtectedRouteProps) => {
   const { user } = useAuth();
   const { isLoading } = useContext(AuthContext);
 
-  if (isLoading) return null; // ou um spinner de carregamento
+  if (isLoading) return null;
 
-  if (!user || !allowedRoles.includes(user.tipo)) {
+  if (!user || !allowedRoles.includes(user.tipo_usuario)) {
     return <Navigate to="/login" />;
   }
 

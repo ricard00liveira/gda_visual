@@ -17,10 +17,28 @@ export interface Logradouro {
   cidade: number;
 }
 
+// localStorage
+const cacheFetch = async (key: string, fetchFn: () => Promise<any>) => {
+  const cached = localStorage.getItem(key);
+  if (cached) {
+    try {
+      return JSON.parse(cached);
+    } catch {
+      localStorage.removeItem(key);
+    }
+  }
+
+  const data = await fetchFn();
+  localStorage.setItem(key, JSON.stringify(data));
+  return data;
+};
+
 // COMARCAS
 export const getComarcas = async () => {
-  const response = await api.get("/comarcas/");
-  return response.data;
+  return cacheFetch("comarcas", async () => {
+    const response = await api.get("/comarcas/");
+    return response.data;
+  });
 };
 
 export const getComarcaById = async (id: number) => {
@@ -45,13 +63,17 @@ export const deleteComarca = async (id: number) => {
 
 // MUNICÍPIOS
 export const getMunicipios = async (): Promise<Municipio[]> => {
-  const response = await api.get("/municipios/");
-  return response.data;
+  return cacheFetch("municipios", async () => {
+    const response = await api.get("/municipios/");
+    return response.data;
+  });
 };
 
 export const getMunicipioById = async (id: number) => {
-  const response = await api.get(`/municipios/${id}/read/`);
-  return response.data;
+  return cacheFetch(`municipio_id_${id}`, async () => {
+    const response = await api.get(`/municipios/${id}/read/`);
+    return response.data;
+  });
 };
 
 export const createMunicipio = async (data: {
@@ -84,7 +106,24 @@ export const getLogradourosPorMunicipio = async (
   const params: any = { page };
   if (q.length >= 3) params.q = q;
 
+  // chave de cache (q só se for >= 3 letras)
+  const cacheKey = `logradouros_${municipioId}_q=${q}_p=${page}`;
+
+  const cached = localStorage.getItem(cacheKey);
+  if (cached) {
+    try {
+      return JSON.parse(cached);
+    } catch {
+      localStorage.removeItem(cacheKey);
+    }
+  }
+
+  // busca da API
   const response = await api.get(`/logradouros/${municipioId}/`, { params });
+  console.log("buscou na API!");
+  // salva cache
+  localStorage.setItem(cacheKey, JSON.stringify(response.data));
+
   return response.data;
 };
 
@@ -107,8 +146,10 @@ export const createLogradouro = async (data: {
 };
 
 export const getLogradouroById = async (id: number) => {
-  const response = await api.get(`/logradouros/${id}/read/`);
-  return response.data;
+  return cacheFetch(`logradouro_${id}`, async () => {
+    const response = await api.get(`/logradouros/${id}/read/`);
+    return response.data;
+  });
 };
 
 // IMPORTAR LOGRADOUROS
