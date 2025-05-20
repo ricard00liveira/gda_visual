@@ -1,8 +1,8 @@
 import axios from "axios";
-
+const baseURL = "https://back.gda-app.xyz/api/";
+//const baseURL: "http://localhost:8000/api/",
 const api = axios.create({
-  baseURL: "http://localhost:8000/api/",
-  //baseURL: "https://back.gda-app.xyz/api/",
+  baseURL,
 });
 
 let isRefreshing = false;
@@ -71,10 +71,9 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshResponse = await axios.post(
-          "http://localhost:8000/api/token/refresh/",
-          { refresh: refreshToken }
-        );
+        const refreshResponse = await axios.post(baseURL + "token/refresh/", {
+          refresh: refreshToken,
+        });
 
         const newAccessToken = refreshResponse.data.access;
         localStorage.setItem("token", newAccessToken);
