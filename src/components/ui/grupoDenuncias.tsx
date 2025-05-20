@@ -12,6 +12,7 @@ import { useState } from "react";
 interface GrupoProps {
   grupo: any[];
   titulo: React.ReactNode;
+  mensagem?: string;
   value: string;
   municipios: Record<number, string>;
   logradouros: Record<number, string>;
@@ -21,6 +22,7 @@ interface GrupoProps {
 const GrupoDenuncias = ({
   grupo,
   titulo,
+  mensagem,
   value,
   municipios,
   logradouros,
@@ -37,6 +39,9 @@ const GrupoDenuncias = ({
       >
         <span className="flex items-center gap-2">
           {titulo} ({grupo.length})
+        </span>
+        <span className="text-xs text-muted-foreground">
+          {mensagem || "Clique para ver detalhes"}
         </span>
       </AccordionTrigger>
       <AccordionContent>
@@ -64,11 +69,7 @@ const GrupoDenuncias = ({
                   </p>
                 </div>
               </div>
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                  report.status
-                )}`}
-              >
+              <span className={`${getStatusColor(report.status)}`}>
                 {getStatus(report.status)}
               </span>
             </div>

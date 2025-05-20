@@ -136,7 +136,7 @@ export default function NewReport() {
       descricao: historico,
       municipio: municipioId,
       endereco: logradouroId,
-      numero: semNumero || numero.trim() === "" ? null : numero,
+      nr_endereco: semNumero || numero.trim() === "" ? null : numero,
       complemento:
         semComplemento || complemento.trim() === "" ? null : complemento,
       bairro: bairro.trim() !== "" ? bairro : null,

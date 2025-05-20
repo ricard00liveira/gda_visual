@@ -1,5 +1,15 @@
-import { useEffect, useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import Loading from "@/components/ui/loading";
 import {
   Table,
   TableBody,
@@ -8,32 +18,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import Loading from "@/components/ui/loading";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "@/components/ui/use-toast";
 import {
-  getComarcas,
-  getMunicipios,
-  createComarca,
-  updateComarca,
-  deleteComarca,
   Comarca,
   Municipio,
+  createComarca,
   createMunicipio,
-  updateMunicipio,
+  deleteComarca,
   deleteMunicipio,
+  getComarcas,
+  getMunicipios,
+  updateComarca,
+  updateMunicipio,
 } from "@/services/locations";
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { toast } from "@/components/ui/use-toast";
+import { Pencil, Plus, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const Municipalities = () => {
   const [comarcas, setComarcas] = useState<Comarca[]>([]);
@@ -62,6 +62,8 @@ const Municipalities = () => {
       if (!isMounted) return;
       try {
         setIsloading(true);
+        localStorage.removeItem("comarcas");
+        localStorage.removeItem("municipios");
         const [comarcasData, municipiosData] = await Promise.all([
           getComarcas(),
           getMunicipios(),
@@ -95,7 +97,7 @@ const Municipalities = () => {
 
       setNovaComarca("");
       setOpenDialog(false);
-
+      localStorage.removeItem("comarcas");
       const atualizadas = await getComarcas();
       setComarcas(atualizadas);
     } catch (error) {
@@ -130,7 +132,7 @@ const Municipalities = () => {
       setEditarDialog(false);
       setComarcaSelecionada(null);
       setNovoNome("");
-
+      localStorage.removeItem("comarcas");
       const atualizadas = await getComarcas();
       setComarcas(atualizadas);
     } catch (error) {
@@ -158,6 +160,7 @@ const Municipalities = () => {
         duration: 2000,
       });
 
+      localStorage.removeItem("comarcas");
       const atualizadas = await getComarcas();
       setComarcas(atualizadas);
     } catch (error) {
@@ -216,7 +219,7 @@ const Municipalities = () => {
       setNomeMunicipio("");
       setComarcaSelecionadaMunicipio("");
       setMunicipioSelecionado(null);
-
+      localStorage.removeItem("municipios");
       const atualizados = await getMunicipios();
       setMunicipios(atualizados);
     } catch (error) {
@@ -243,7 +246,7 @@ const Municipalities = () => {
         variant: "success",
         duration: 2000,
       });
-
+      localStorage.removeItem("municipios");
       const atualizados = await getMunicipios();
       setMunicipios(atualizados);
     } catch (error) {

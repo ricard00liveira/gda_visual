@@ -118,3 +118,23 @@ export async function validarHistorico(
     throw error?.response?.data?.error || "Erro ao validar o histórico.";
   }
 }
+
+export const getAnexosPorDenuncia = async (denunciaId: number) => {
+  try {
+    const response = await api.get(`/denuncias/${denunciaId}/anexos/`);
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao buscar anexos da denúncia:", error);
+    throw error;
+  }
+};
+
+//
+export const deletarAnexo = async (anexoId: number): Promise<void> => {
+  try {
+    await api.delete(`/denuncias/anexos/${anexoId}/delete/`);
+  } catch (error) {
+    console.error("Erro ao deletar anexo:", error);
+    throw error;
+  }
+};

@@ -20,26 +20,18 @@ export interface Report {
   ponto_referencia?: string | null;
   bairro?: string | null;
 
-  municipio: {
-    id: number;
-    nome: string;
-  } | null;
+  municipio: number | null;
 
-  fato: {
-    id: number;
-    nome: string;
-  } | null;
+  fato: number | null;
 
-  subfato: {
-    id: number;
-    nome: string;
-  } | null;
+  subfato: number | null;
 
   responsavel: string | null;
 
   anexos: {
     id: number;
-    arquivo: string; // URL
+    arquivo: string; // nome do arquivo
+    arquivo_url: string; // URL
     descricao: string | null;
     data_upload: string;
   }[];
@@ -49,4 +41,11 @@ export interface Report {
     status: "analise" | "fila" | "atendimento" | "concluida" | "negada";
     data_alteracao: string;
   }[];
+}
+
+export interface Anexo {
+  id: number;
+  arquivo: string;
+  arquivo_url?: string;
+  data_upload: string;
 }

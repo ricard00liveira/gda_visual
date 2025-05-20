@@ -7,17 +7,18 @@ interface Props {
 
 // Função auxiliar para retornar a classe de cor
 export function getStatusColor(status: string): string {
+  const formato = "px-3 py-1 rounded-full text-xs font-medium";
   switch (status) {
     case "analise":
-      return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300";
+      return `${formato} bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300`;
     case "fila":
-      return "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300";
+      return `${formato} bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300`;
     case "concluida":
-      return "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300";
+      return `${formato} bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300`;
     case "rejeitada":
-      return "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300";
+      return `${formato} bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300`;
     default:
-      return "bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300";
+      return `${formato} bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300`;
   }
 }
 

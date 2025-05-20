@@ -85,6 +85,7 @@ const MyReports = () => {
                   Em Análise
                 </>
               }
+              mensagem="A denúncia foi recebida e está sob avaliação preliminar pela equipe."
               value="analise"
               municipios={municipios}
               logradouros={logradouros}
@@ -99,6 +100,7 @@ const MyReports = () => {
                   Na Fila
                 </>
               }
+              mensagem="A denúncia foi aprovada e aguarda atendimento."
               value="fila"
               municipios={municipios}
               logradouros={logradouros}
@@ -113,6 +115,7 @@ const MyReports = () => {
                   Em Atendimento
                 </>
               }
+              mensagem="A equipe está investigando e atuando sobre a denúncia."
               value="atendimento"
               municipios={municipios}
               logradouros={logradouros}
@@ -127,6 +130,7 @@ const MyReports = () => {
                   Concluídas
                 </>
               }
+              mensagem="As providências foram tomadas e a denúncia foi encerrada."
               value="concluida"
               municipios={municipios}
               logradouros={logradouros}
@@ -141,6 +145,7 @@ const MyReports = () => {
                   Rejeitadas
                 </>
               }
+              mensagem="A denúncia foi recusada por falta de dados, inconsistência ou inadequação aos critérios."
               value="rejeitada"
               municipios={municipios}
               logradouros={logradouros}

@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import Loading from "@/components/ui/loading";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import {
   Table,
@@ -20,6 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getStatus, getStatusColor } from "@/components/ui/typeReportIcon";
 import { toast } from "@/components/ui/use-toast";
 import { handleUserError } from "@/lib/error";
 import { unmaskCPF } from "@/lib/unmaskCPF";
@@ -594,29 +596,38 @@ const Users = () => {
                 </div>
               </TabsContent>
               <TabsContent value="denuncias" className="space-y-2 pt-4">
-                {usuarioDenuncias?.length ? (
-                  usuarioDenuncias.map((d) => (
-                    <div key={d.numero} className="border p-2 rounded mb-2">
-                      <p>
-                        <strong>Número:</strong> {d.numero}
-                      </p>
-                      <p>
-                        <strong>Status:</strong> {d.status}
-                      </p>
-                      <p>
-                        <strong>Data:</strong> {d.data}
-                      </p>
-                      <p>
-                        <strong>Município:</strong> {d.municipio?.nome || "–"}
-                      </p>
-                      <p>
-                        <strong>Fato:</strong> {d.fato?.nome || "–"}
-                      </p>
-                    </div>
-                  ))
-                ) : (
-                  <p>Nenhuma denúncia registrada.</p>
-                )}
+                <ScrollArea className="h-[calc(50vh-120px)] pr-4">
+                  {usuarioDenuncias?.length ? (
+                    usuarioDenuncias.map((d) => (
+                      <div key={d.numero} className="border p-2 rounded mb-2">
+                        <p>
+                          <strong>Número:</strong> {d.numero}
+                        </p>
+                        <p>
+                          <strong>Status:</strong>{" "}
+                          <span className={getStatusColor(d.status)}>
+                            {getStatus(d.status)}
+                          </span>
+                        </p>
+                        <p>
+                          <strong>Data:</strong> {d.data}
+                        </p>
+                        <p>
+                          <strong>Município:</strong> {d.municipio || "–"}
+                        </p>
+                        {d.status !== "analise" && (
+                          <>
+                            <p>
+                              <strong>Fato:</strong> {d.fato || "–"}
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <p>Nenhuma denúncia registrada.</p>
+                  )}
+                </ScrollArea>
               </TabsContent>
             </Tabs>
             {isloading ? (

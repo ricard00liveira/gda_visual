@@ -120,8 +120,6 @@ export const getLogradourosPorMunicipio = async (
 
   // busca da API
   const response = await api.get(`/logradouros/${municipioId}/`, { params });
-  console.log("buscou na API!");
-  // salva cache
   localStorage.setItem(cacheKey, JSON.stringify(response.data));
 
   return response.data;
