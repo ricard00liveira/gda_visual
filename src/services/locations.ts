@@ -17,28 +17,28 @@ export interface Logradouro {
   cidade: number;
 }
 
-// localStorage
-const cacheFetch = async (key: string, fetchFn: () => Promise<any>) => {
-  const cached = localStorage.getItem(key);
-  if (cached) {
-    try {
-      return JSON.parse(cached);
-    } catch {
-      localStorage.removeItem(key);
-    }
-  }
+// // localStorage
+// const cacheFetch = async (key: string, fetchFn: () => Promise<any>) => {
+//   const cached = localStorage.getItem(key);
+//   if (cached) {
+//     try {
+//       return JSON.parse(cached);
+//     } catch {
+//       localStorage.removeItem(key);
+//     }
+//   }
 
-  const data = await fetchFn();
-  localStorage.setItem(key, JSON.stringify(data));
-  return data;
-};
+//   const data = await fetchFn();
+//   localStorage.setItem(key, JSON.stringify(data));
+//   return data;
+// };
 
 // COMARCAS
 export const getComarcas = async () => {
-  return cacheFetch("comarcas", async () => {
-    const response = await api.get("/comarcas/");
-    return response.data;
-  });
+  // return cacheFetch("comarcas", async () => {
+  const response = await api.get("/comarcas/");
+  return response.data;
+  // });
 };
 
 export const getComarcaById = async (id: number) => {
@@ -63,17 +63,17 @@ export const deleteComarca = async (id: number) => {
 
 // MUNICÍPIOS
 export const getMunicipios = async (): Promise<Municipio[]> => {
-  return cacheFetch("municipios", async () => {
-    const response = await api.get("/municipios/");
-    return response.data;
-  });
+  // return cacheFetch("municipios", async () => {
+  const response = await api.get("/municipios/");
+  return response.data;
+  // });
 };
 
 export const getMunicipioById = async (id: number) => {
-  return cacheFetch(`municipio_id_${id}`, async () => {
-    const response = await api.get(`/municipios/${id}/read/`);
-    return response.data;
-  });
+  // return cacheFetch(`municipio_id_${id}`, async () => {
+  const response = await api.get(`/municipios/${id}/read/`);
+  return response.data;
+  // });
 };
 
 export const createMunicipio = async (data: {
@@ -144,10 +144,10 @@ export const createLogradouro = async (data: {
 };
 
 export const getLogradouroById = async (id: number) => {
-  return cacheFetch(`logradouro_${id}`, async () => {
-    const response = await api.get(`/logradouros/${id}/read/`);
-    return response.data;
-  });
+  // return cacheFetch(`logradouro_${id}`, async () => {
+  const response = await api.get(`/logradouros/${id}/read/`);
+  return response.data;
+  // });
 };
 
 // IMPORTAR LOGRADOUROS
