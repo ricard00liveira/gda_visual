@@ -106,22 +106,7 @@ export const getLogradourosPorMunicipio = async (
   const params: any = { page };
   if (q.length >= 3) params.q = q;
 
-  // chave de cache (q só se for >= 3 letras)
-  const cacheKey = `logradouros_${municipioId}_q=${q}_p=${page}`;
-
-  const cached = localStorage.getItem(cacheKey);
-  if (cached) {
-    try {
-      return JSON.parse(cached);
-    } catch {
-      localStorage.removeItem(cacheKey);
-    }
-  }
-
-  // busca da API
   const response = await api.get(`/logradouros/${municipioId}/`, { params });
-  localStorage.setItem(cacheKey, JSON.stringify(response.data));
-
   return response.data;
 };
 
