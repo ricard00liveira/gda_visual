@@ -299,6 +299,7 @@ export default function Addresses() {
     } catch (error) {
       toast({ title: "Erro ao importar logradouros", variant: "destructive" });
     } finally {
+      await atualizarListaLogradouros();
       setIsLoading(false);
     }
   };
@@ -325,7 +326,24 @@ export default function Addresses() {
       });
     }
   };
-
+  const atualizarListaLogradouros = async () => {
+    if (municipioSelecionado === null) return;
+    try {
+      const response = await getLogradourosPorMunicipio(
+        municipioSelecionado,
+        filtro.length >= 3 ? filtro : "",
+        1
+      );
+      setPagina(1);
+      setLogradouros(response.results);
+      setTemMaisPaginas(response.next !== null);
+    } catch (error) {
+      toast({
+        title: "Erro ao atualizar logradouros",
+        variant: "destructive",
+      });
+    }
+  };
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Logradouros por Município</h1>
