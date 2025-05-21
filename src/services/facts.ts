@@ -56,7 +56,7 @@ export const createSubfact = async (factId: number, data: { nome: string }) => {
 };
 
 export const updateSubfact = async (id: number, data: { nome: string }) => {
-  const res = await api.put(`/subfatos/${id}/update/`, data);
+  const res = await api.patch(`/subfatos/${id}/update/`, data);
   return res.data;
 };
 
