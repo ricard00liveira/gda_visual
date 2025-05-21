@@ -161,6 +161,7 @@ const MyReports = () => {
               setReports((prev) =>
                 prev.map((r) => (r.numero === updated.numero ? updated : r))
               );
+              setSelectedReport(updated);
             }}
           />
         )}
