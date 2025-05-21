@@ -51,6 +51,7 @@ export const ReportDetailsModal = ({
   const [anexos, setAnexos] = useState<Anexo[]>([]);
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [currentReport, setCurrentReport] = useState<Report | null>(null);
 
   useEffect(() => {
     if (!report) return;
@@ -225,10 +226,11 @@ export const ReportDetailsModal = ({
   const handleAddToFieldAgent = () => {
     console.log("Adicionando ao agente de campo");
   };
-
-  if (!report) return null;
-  const currentReport = isEditing ? editedReport : report;
-  if (!currentReport) return null;
+  useEffect(() => {
+    if (!report) return null;
+    isEditing ? setCurrentReport(editedReport) : setCurrentReport(report);
+    if (!currentReport) return null;
+  }, [report, isEditing, editedReport]);
 
   return (
     <Dialog open={!!report} onOpenChange={onClose}>
