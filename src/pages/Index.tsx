@@ -1,13 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogBody,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { ArrowRight, HelpCircle, Shield, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -158,13 +159,15 @@ const Index = () => {
           </div>
         </div>
 
-        <Dialog open={showDialog} onOpenChange={setShowDialog}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle className="text-lg font-bold text-red-600">
+        <ResponsiveDialog open={showDialog} onOpenChange={setShowDialog}>
+          <ResponsiveDialogContent className="sm:max-w-[600px]">
+            <ResponsiveDialogHeader>
+              <ResponsiveDialogTitle className="text-lg font-bold text-red-600">
                 Aviso Importante
-              </DialogTitle>
-              <DialogDescription className="text-justify pt-4 text-sm leading-relaxed">
+              </ResponsiveDialogTitle>
+            </ResponsiveDialogHeader>
+            <ResponsiveDialogBody>
+              <ResponsiveDialogDescription className="text-justify pt-4 text-sm leading-relaxed">
                 Ao enviar uma <strong>denúncia anônima</strong>, suas
                 informações estarão protegidas nos termos da
                 <strong>
@@ -218,23 +221,25 @@ const Index = () => {
                 <strong>termos</strong>, das <strong>limitações</strong> e das
                 <strong> possíveis consequências legais</strong> decorrentes do
                 envio de informações inverídicas.
-              </DialogDescription>
-            </DialogHeader>
+              </ResponsiveDialogDescription>
+              <div className="flex items-center space-x-2 py-4">
+                <Checkbox
+                  id="terms"
+                  checked={isChecked}
+                  onCheckedChange={(checked) =>
+                    setIsChecked(checked as boolean)
+                  }
+                />
+                <label
+                  htmlFor="terms"
+                  className="text-sm font-medium leading-none"
+                >
+                  Estou ciente!
+                </label>
+              </div>
+            </ResponsiveDialogBody>
 
-            <div className="flex items-center space-x-2 py-4">
-              <Checkbox
-                id="terms"
-                checked={isChecked}
-                onCheckedChange={(checked) => setIsChecked(checked as boolean)}
-              />
-              <label
-                htmlFor="terms"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Estou ciente!
-              </label>
-            </div>
-            <DialogFooter className="sm:justify-between">
+            <ResponsiveDialogFooter>
               <Button
                 type="button"
                 variant="outline"
@@ -249,9 +254,9 @@ const Index = () => {
               >
                 Prosseguir
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </ResponsiveDialogFooter>
+          </ResponsiveDialogContent>
+        </ResponsiveDialog>
       </div>
     </div>
   );

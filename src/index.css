@@ -1,7 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
- 
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -33,7 +33,7 @@
     --sidebar-border: 217.2 32.6% 17.5%;
     --sidebar-ring: 142.1 76.2% 36.3%;
   }
- 
+
   .dark {
     --background: 222.2 24% 15%;
     --foreground: 210 40% 98%;
@@ -56,13 +56,29 @@
     --ring: 142.1 70% 45%;
   }
 }
- 
+
 @layer base {
   * {
     @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Ajustes gerais de responsividade */
+  html {
+    font-size: 14px;
+  }
+
+  @screen sm {
+    html {
+      font-size: 16px;
+    }
+  }
+
+  body,
+  #root {
+    min-height: 100vh;
   }
 }
 
@@ -89,4 +105,29 @@
 
 .dark .text-muted {
   color: hsl(var(--muted-foreground));
+}
+
+/* Estilos para a barra de rolagem em dispositivos móveis */
+
+@media (max-width: 767px) {
+  .radix-scroll-area-scrollbar {
+    background-color: rgba(
+      var(--primary-foreground),
+      0.15
+    ); /* Cor de fundo semi-transparente */
+  }
+
+  .radix-scroll-area-scrollbar-thumb {
+    background-color: rgb(
+      var(--primary)
+    ); /* Cor primária para o "polegar" /
+border-radius: 4px; / Arredondamento para melhor visual */
+  }
+
+  .radix-scroll-area-scrollbar:hover .radix-scroll-area-scrollbar-thumb {
+    background-color: rgb(
+      var(--primary),
+      0.8
+    ); /* Escurecer ao passar o mouse (se aplicável) */
+  }
 }

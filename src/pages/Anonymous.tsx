@@ -24,7 +24,7 @@ import {
   DialogOverlay,
   DialogTitle,
 } from "@radix-ui/react-dialog";
-import { ArrowLeft, HelpCircle, Leaf, Shield, Upload } from "lucide-react";
+import { ArrowLeft, HelpCircle, Shield, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -336,7 +336,7 @@ const Anonymous = ({
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-center justify-between mb-8 bg-gradient-to-r from-emerald-500/10 to-emerald-600/10 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-emerald-200">
           <div className="flex items-center gap-2 mb-4 sm:mb-0">
-            <Leaf className="w-8 h-8 text-emerald-600" />
+            <img src="/logo_gda.png" alt="Logo GDA" className="w-10 h-10" />
             <h1 className="text-3xl font-bold text-emerald-700">GDA</h1>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">

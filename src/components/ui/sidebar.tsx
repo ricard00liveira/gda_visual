@@ -201,20 +201,11 @@ const Sidebar = React.forwardRef<
             }
             side={side}
           >
-            <SheetTitle className="sr-only" id="sidebar-title">
-              Menu lateral
-            </SheetTitle>
-            <SheetDescription className="sr-only" id="sidebar-desc">
-              Este menu contém os atalhos de navegação do sistema.
+            <SheetTitle className="sr-only">Menu Lateral</SheetTitle>
+            <SheetDescription className="sr-only">
+              Navegação principal e opções do sistema.
             </SheetDescription>
-
-            <div
-              className="flex h-full w-full flex-col"
-              aria-labelledby="sidebar-title"
-              aria-describedby="sidebar-desc"
-            >
-              {children}
-            </div>
+            {children}
           </SheetContent>
         </Sheet>
       );

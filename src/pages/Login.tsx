@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { formatCPF } from "@/lib/formatCPF";
 import { unmaskCPF } from "@/lib/unmaskCPF";
 import { getProfile, loginRequest, updateLastLoginUser } from "@/services/auth";
-import { ArrowLeft, Leaf, LogOut, UserCheck, UserPlus } from "lucide-react";
+import { ArrowLeft, LogOut, UserCheck, UserPlus } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -122,7 +122,7 @@ const Login = () => {
               <span>Voltar para início</span>
             </Link>
             <div className="flex items-center gap-2 mb-8">
-              <Leaf className="w-8 h-8 text-emerald-400" />
+              <img src="/logo_gda.png" alt="Logo GDA" className="w-10 h-10" />
               <h1 className="text-3xl font-bold">GDA</h1>
             </div>
             <h2 className="text-3xl lg:text-4xl font-bold mb-6 leading-tight">
